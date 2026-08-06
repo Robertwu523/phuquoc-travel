@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ---- Leaflet custom markers ---- */
+.pq-marker {
+  background: transparent;
+  border: none;
+}
+.pq-pin {
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+  background: var(--pin-color, #0d9488);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease;
+}
+.pq-pin--added {
+  box-shadow: 0 0 0 3px #14b8a6, 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+.pq-marker:hover .pq-pin {
+  transform: scale(1.12);
+}
+
+/* Leaflet popup tweaks */
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+}
+.leaflet-popup-content {
+  margin: 10px 12px;
+}
+
+/* ---- Weather animations ---- */
+@keyframes wx-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes wx-float-slow {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-12px) translateX(6px); }
+}
+@keyframes wx-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes wx-pulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+.wx-float { animation: wx-float 4s ease-in-out infinite; }
+.wx-float-slow { animation: wx-float-slow 6s ease-in-out infinite; }
+.wx-sun { animation: wx-spin 28s linear infinite; display: inline-block; }
+.wx-cloud { animation: wx-float 5s ease-in-out infinite; display: inline-block; }
+.wx-pulse { animation: wx-pulse 3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .wx-float, .wx-float-slow, .wx-sun, .wx-cloud, .wx-pulse { animation: none; }
+}
