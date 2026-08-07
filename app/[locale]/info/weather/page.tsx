@@ -309,26 +309,64 @@ function TrendCard({ data }: { data: Data }) {
   );
 }
 
-/* ---------- sunrise/sunset + UV ---------- */
+/* ---------- sunrise/sunset + UV (animated sun traveling along the arc) ---------- */
+// Arc: M 10 70 Q 130 -20, 250 70  → quadratic bezier, P0=(10,70) P1=(130,-20) P2=(250,70)
+function bez(p: number) {
+  const m = 1 - p;
+  return {
+    x: m * m * 10 + 2 * m * p * 130 + p * p * 250,
+    y: m * m * 70 + 2 * m * p * -20 + p * p * 70,
+  };
+}
+
 function SunCycleCard({ data }: { data: Data }) {
   const rise = data.daily.sunrise[0];
   const set = data.daily.sunset[0];
   const uv = data.current.uv_index ?? data.daily.uv_index_max[0];
   const uvl = uvLevel(uv);
+
   const nowMs = new Date(data.current.time).getTime();
   const riseMs = new Date(rise).getTime();
   const setMs = new Date(set).getTime();
-  const prog = Math.max(0, Math.min(1, (nowMs - riseMs) / (setMs - riseMs)));
-  const sunX = 10 + prog * 240;
-  const sunY = 70 - Math.sin(prog * Math.PI) * 55;
+  const dayProg = Math.max(0, Math.min(1, (nowMs - riseMs) / (setMs - riseMs)));
+
+  // animation progress 0→1, replays whenever fresh data arrives (refresh / auto-poll)
+  const [a, setA] = useState(0);
+  useEffect(() => {
+    setA(0);
+    let raf = 0;
+    const start = performance.now();
+    const dur = 1600;
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3); // easeOutCubic
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / dur);
+      setA(ease(t));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [data.fetchedAt]);
+
+  const p = dayProg * a; // sun travels from sunrise (0) to current dayProg as a→1
+  const sun = bez(p);
+  // de Casteljau control point so the filled arc is the true sub-bezier up to the sun
+  const cx = 10 + 120 * p;
+  const cy = 70 - 90 * p;
+
   return (
     <div className="rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <h3 className="text-lg font-bold text-slate-900 dark:text-white">日出 · 日落</h3>
       <svg viewBox="0 0 260 80" className="mt-3 w-full">
-        <path d="M 10 70 Q 130 -20, 250 70" fill="none" stroke="#E2E8F0" strokeWidth="2" strokeDasharray="4 4" />
-        <path d={`M 10 70 Q 130 -20, ${sunX} ${sunY}`} fill="none" stroke="#FF7A45" strokeWidth="2.5" strokeLinecap="round" />
+        {/* horizon line */}
         <line x1="10" y1="70" x2="250" y2="70" stroke="#E2E8F0" strokeWidth="2" />
-        <circle cx={sunX} cy={sunY} r="8" fill="#FF7A45" />
+        {/* full dashed arc */}
+        <path d="M 10 70 Q 130 -20, 250 70" fill="none" stroke="#E2E8F0" strokeWidth="2" strokeDasharray="4 4" />
+        {/* filled arc up to current sun position */}
+        <path d={`M 10 70 Q ${cx.toFixed(2)} ${cy.toFixed(2)}, ${sun.x.toFixed(2)} ${sun.y.toFixed(2)}`} fill="none" stroke="#FF7A45" strokeWidth="2.5" strokeLinecap="round" />
+        {/* sun glow + core */}
+        <circle cx={sun.x} cy={sun.y} r="13" fill="#FFB088" opacity={0.35 + 0.3 * a} />
+        <circle cx={sun.x} cy={sun.y} r="8" fill="#FF7A45" />
+        {/* endpoints */}
         <circle cx="10" cy="70" r="4" fill="#FFB088" />
         <circle cx="250" cy="70" r="4" fill="#4A5568" />
       </svg>
