@@ -20,20 +20,24 @@ export async function GET(request: Request) {
     `&current=pm2_5,us_aqi&timezone=Asia/Ho_Chi_Minh`;
 
   try {
-    const [f, a] = await Promise.all([
-      fetch(forecastUrl, cacheOpt),
-      fetch(aqUrl, cacheOpt),
-    ]);
-    if (!f.ok || !a.ok) return Response.json({ error: "upstream" }, { status: 502 });
+    const f = await fetch(forecastUrl, cacheOpt);
+    if (!f.ok) return Response.json({ error: "upstream" }, { status: 502 });
     const forecast = await f.json();
-    const air = await a.json();
+    // air quality is best-effort: don't fail the whole request if it hiccups
+    let airCurrent: { pm2_5: number; us_aqi: number } | null = null;
+    try {
+      const a = await fetch(aqUrl, cacheOpt);
+      if (a.ok) airCurrent = (await a.json()).current;
+    } catch {
+      /* air quality optional */
+    }
     return Response.json({
       lat,
       lng,
       current: forecast.current,
       hourly: forecast.hourly,
       daily: forecast.daily,
-      air: air.current,
+      air: airCurrent,
       fetchedAt: new Date().toISOString(),
     });
   } catch {

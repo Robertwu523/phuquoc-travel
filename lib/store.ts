@@ -15,6 +15,8 @@ type TripState = {
   dayAssignments: Record<number, string[]>;
   /** registry of user-dropped custom pins, keyed by id */
   customPins: Record<string, CustomPin>;
+  /** ids of curated POIs the user has deleted from their catalog */
+  hiddenCurated: string[];
   _hasHydrated: boolean;
   /** ephemeral "fly map to this point" pulse (not persisted) */
   flyTo: { lat: number; lng: number; zoom: number; nonce: number } | null;
@@ -32,6 +34,10 @@ type TripState = {
   addCustomPin: (pin: CustomPin) => void;
   updateCustomPin: (id: string, patch: Partial<CustomPin>) => void;
   removeCustomPin: (id: string) => void;
+  /** hide a curated POI from the catalog/map (and drop it from any day) */
+  hideCurated: (id: string) => void;
+  /** restore all previously hidden curated POIs */
+  restoreAllCurated: () => void;
   /** register a user-added place, assign to `day`, return its id */
   addPlace: (
     day: number,
@@ -59,6 +65,7 @@ export const useTripStore = create<TripState>()(
       selectedDay: 0,
       dayAssignments: {},
       customPins: {},
+      hiddenCurated: [],
       _hasHydrated: false,
       flyTo: null,
 
@@ -120,6 +127,16 @@ export const useTripStore = create<TripState>()(
           }
           return { customPins: next, dayAssignments };
         }),
+      hideCurated: (id) =>
+        set((s) => {
+          if (s.hiddenCurated.includes(id)) return {};
+          const dayAssignments: Record<number, string[]> = {};
+          for (const [k, v] of Object.entries(s.dayAssignments)) {
+            dayAssignments[Number(k)] = v.filter((x) => x !== id);
+          }
+          return { hiddenCurated: [...s.hiddenCurated, id], dayAssignments };
+        }),
+      restoreAllCurated: () => set({ hiddenCurated: [] }),
       addPlace: (day, data) => {
         const id = `pin-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
         const pin: CustomPin = {
@@ -151,6 +168,7 @@ export const useTripStore = create<TripState>()(
         selectedDay: s.selectedDay,
         dayAssignments: s.dayAssignments,
         customPins: s.customPins,
+        hiddenCurated: s.hiddenCurated,
       }),
       onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
     }

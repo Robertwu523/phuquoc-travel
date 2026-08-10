@@ -13,7 +13,7 @@ import {
   evisaSteps,
   evisaLinks,
   officialSources,
-  checklist,
+  checklistGroups,
   pitfalls,
   type DocItem,
 } from "@/data/documents";
@@ -54,6 +54,23 @@ export default function DocumentsPage() {
       />
 
       <div className="mx-auto max-w-5xl space-y-12 px-4 py-12">
+        {/* ===== top checklist (most prominent) ===== */}
+        <section className="rounded-2xl border-2 border-[#FF7A45] bg-gradient-to-b from-orange-50 to-white p-6 shadow-md dark:border-[#FF7A45] dark:from-orange-950/20 dark:to-slate-900">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">✅</span>
+            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">出发前检查清单</h2>
+            <span className="ml-auto rounded-full bg-[#FF7A45] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
+              最重要
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-slate-500">
+            按分类逐项打勾，进度自动保存（存本机）。全部完成即可放心出发。
+          </p>
+          <div className="mt-4">
+            <DocChecklist groups={checklistGroups} />
+          </div>
+        </section>
+
         {/* destination selector */}
         <section>
           <SectionTitle>选择目的地</SectionTitle>
@@ -222,14 +239,6 @@ export default function DocumentsPage() {
                 YouTube 教程
               </a>
             </div>
-          </div>
-        </section>
-
-        {/* checklist */}
-        <section>
-          <SectionTitle>出发前检查清单 <span className="text-base font-normal text-slate-400">（自动保存进度）</span></SectionTitle>
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-            <DocChecklist items={checklist} />
           </div>
         </section>
 

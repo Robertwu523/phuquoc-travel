@@ -11,7 +11,7 @@ export type Pending = {
   loading: boolean;
   name: string;
   info: string;
-  category: PoiCategory;
+  category: string;
   duration: number;
   snappedId: string | null;
   error?: string;
@@ -90,11 +90,11 @@ export default function AddPlaceDialog({
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <label className="flex flex-col text-xs font-medium text-slate-600 dark:text-slate-300">
+              <div className="flex flex-col text-xs font-medium text-slate-600 dark:text-slate-300">
                 {t("categoryLabel")}
                 <select
-                  value={pending.category}
-                  onChange={(e) => onChange({ category: e.target.value as PoiCategory })}
+                  value={(CATEGORY_ORDER as string[]).includes(pending.category) ? pending.category : "__custom__"}
+                  onChange={(e) => onChange({ category: e.target.value === "__custom__" ? "" : e.target.value })}
                   className="mt-1 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 focus:border-teal-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
                 >
                   {CATEGORY_ORDER.map((c) => (
@@ -102,8 +102,17 @@ export default function AddPlaceDialog({
                       {categoryStyles[c].emoji} {tc(c)}
                     </option>
                   ))}
+                  <option value="__custom__">✏️ 自定义</option>
                 </select>
-              </label>
+                {!(CATEGORY_ORDER as string[]).includes(pending.category) && (
+                  <input
+                    value={pending.category}
+                    onChange={(e) => onChange({ category: e.target.value })}
+                    placeholder="输入分类，如：潜水 / 购物"
+                    className="mt-1.5 rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  />
+                )}
+              </div>
               <label className="flex flex-col text-xs font-medium text-slate-600 dark:text-slate-300">
                 {t("durationLabel")}
                 <input

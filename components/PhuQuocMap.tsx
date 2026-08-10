@@ -14,7 +14,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useLocale, useTranslations } from "next-intl";
 
-import { pois } from "@/data/pois";
+import { pois, type PoiCategory } from "@/data/pois";
 import { useTripStore } from "@/lib/store";
 import {
   poiToMapStop,
@@ -38,6 +38,7 @@ import { googleNavUrl } from "@/lib/nav";
 import AddPlaceDialog, { type Pending } from "./AddPlaceDialog";
 
 const CENTER: [number, number] = [10.2, 103.96];
+const KNOWN_CATS = ["beach", "family", "nature", "island", "market", "temple", "culture"] as const;
 
 const iconCache = new Map<string, L.DivIcon>();
 function makeIcon(stop: MapStop, highlighted: boolean) {
@@ -140,6 +141,7 @@ export default function PhuQuocMap() {
   const locale = useLocale() as Locale;
   const t = useTranslations("Map");
   const tp = useTranslations("Planner");
+  const tc = useTranslations("Categories");
 
   const selectedDay = useTripStore((s) => s.selectedDay);
   const dayAssignments = useTripStore((s) => s.dayAssignments);
@@ -149,6 +151,8 @@ export default function PhuQuocMap() {
   const addPlace = useTripStore((s) => s.addPlace);
   const updateCustomPin = useTripStore((s) => s.updateCustomPin);
   const removeCustomPin = useTripStore((s) => s.removeCustomPin);
+  const hideCurated = useTripStore((s) => s.hideCurated);
+  const hiddenCurated = useTripStore((s) => s.hiddenCurated);
   const setDayOrder = useTripStore((s) => s.setDayOrder);
   const flyTo = useTripStore((s) => s.flyTo);
 
@@ -250,7 +254,7 @@ export default function PhuQuocMap() {
         name: pending.name.trim(),
         lat: pending.lat,
         lng: pending.lng,
-        category: pending.category,
+        category: pending.category.trim() || "自定义",
         info: pending.info,
         duration: pending.duration,
       });
@@ -274,7 +278,13 @@ export default function PhuQuocMap() {
     }
   }
 
-  const curatedStops = useMemo(() => pois.map((p) => poiToMapStop(p, locale)), [locale]);
+  const curatedStops = useMemo(
+    () =>
+      pois
+        .map((p) => poiToMapStop(p, locale))
+        .filter((s) => !hiddenCurated.includes(s.id)),
+    [locale, hiddenCurated]
+  );
   const pinStops = useMemo(
     () => Object.values(customPins).map(customToMapStop),
     [customPins]
@@ -331,6 +341,13 @@ export default function PhuQuocMap() {
                       ? t("added", { day: selectedDay + 1 })
                       : `${t("addToTrip")} · ${tp("day", { n: selectedDay + 1 })}`}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => hideCurated(stop.id)}
+                    className="mt-1 w-full rounded-md px-2 py-1 text-[11px] text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                  >
+                    从目录移除 ✕
+                  </button>
                 </div>
               </Popup>
             </Marker>
@@ -352,6 +369,41 @@ export default function PhuQuocMap() {
                     onChange={(e) => updateCustomPin(stop.id, { name: e.target.value })}
                     className="w-full rounded border border-slate-300 px-1.5 py-1 text-sm font-semibold text-slate-900 focus:border-teal-500 focus:outline-none"
                   />
+                  {pin && (
+                    <div className="mt-2">
+                      <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                        {t("categoryLabel")}
+                      </div>
+                      <select
+                        value={
+                          (KNOWN_CATS as readonly string[]).includes(pin.category)
+                            ? pin.category
+                            : "__custom__"
+                        }
+                        onChange={(e) =>
+                          updateCustomPin(stop.id, {
+                            category: e.target.value === "__custom__" ? "" : e.target.value,
+                          })
+                        }
+                        className="mt-0.5 w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                      >
+                        {KNOWN_CATS.map((c) => (
+                          <option key={c} value={c}>
+                            {categoryStyles[c].emoji} {tc(c)}
+                          </option>
+                        ))}
+                        <option value="__custom__">✏️ 自定义</option>
+                      </select>
+                      {!(KNOWN_CATS as readonly string[]).includes(pin.category) && (
+                        <input
+                          value={pin.category}
+                          onChange={(e) => updateCustomPin(stop.id, { category: e.target.value })}
+                          placeholder="输入分类"
+                          className="mt-1 w-full rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                        />
+                      )}
+                    </div>
+                  )}
                   {pin && (
                     <div className="mt-1">
                       <ReviewButtons name={pin.name || "Phu Quoc"} locale={locale} />

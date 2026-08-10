@@ -4,13 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { pois, type PoiCategory } from "@/data/pois";
-import { categoryStyles } from "@/lib/categories";
+import { categoryStyles, CUSTOM_STYLE } from "@/lib/categories";
 import { useTripStore } from "@/lib/store";
 import { poiToMapStop, customToMapStop, type MapStop } from "@/lib/stops";
 
-type Filter = PoiCategory | "all";
-const FILTERS: Filter[] = [
-  "all",
+const KNOWN_CATS: PoiCategory[] = [
   "beach",
   "family",
   "nature",
@@ -46,7 +44,7 @@ export default function PoiSidebar() {
   const tm = useTranslations("Map");
   const tp = useTranslations("Planner");
   const locale = useLocale() as "zh" | "en";
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [osm, setOsm] = useState<OsmHit[]>([]);
   const [osmLoading, setOsmLoading] = useState(false);
@@ -56,6 +54,9 @@ export default function PoiSidebar() {
   const addPoiToDay = useTripStore((s) => s.addPoiToDay);
   const removeCustomPin = useTripStore((s) => s.removeCustomPin);
   const customPins = useTripStore((s) => s.customPins);
+  const hiddenCurated = useTripStore((s) => s.hiddenCurated);
+  const hideCurated = useTripStore((s) => s.hideCurated);
+  const restoreAllCurated = useTripStore((s) => s.restoreAllCurated);
   const addPlace = useTripStore((s) => s.addPlace);
   const setFlyTo = useTripStore((s) => s.setFlyTo);
 
@@ -64,13 +65,34 @@ export default function PoiSidebar() {
     [dayAssignments, selectedDay]
   );
 
+  const hidden = useMemo(() => new Set(hiddenCurated), [hiddenCurated]);
   const items: MapStop[] = useMemo(
-    () => [
-      ...pois.map((p) => poiToMapStop(p, locale)),
-      ...Object.values(customPins).map(customToMapStop),
-    ],
-    [locale, customPins]
+    () =>
+      [
+        ...pois.map((p) => poiToMapStop(p, locale)),
+        ...Object.values(customPins).map(customToMapStop),
+      ].filter((s) => !(s.isCurated && hidden.has(s.id))),
+    [locale, customPins, hidden]
   );
+
+  // dynamic category chips: the fixed set + any user-created custom categories
+  const filters = useMemo<string[]>(() => {
+    const arr: string[] = ["all", ...KNOWN_CATS];
+    const seen = new Set(arr);
+    for (const p of Object.values(customPins)) {
+      const c = p.category?.trim();
+      if (c && !seen.has(c)) {
+        seen.add(c);
+        arr.push(c);
+      }
+    }
+    return arr;
+  }, [customPins]);
+
+  // if the active filter's category got deleted, fall back to "all"
+  useEffect(() => {
+    if (filter !== "all" && !filters.includes(filter)) setFilter("all");
+  }, [filter, filters]);
 
   // debounced OSM search
   useEffect(() => {
@@ -200,13 +222,27 @@ export default function PoiSidebar() {
         </div>
       ) : (
         <>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-            {tm("catalogTitle")}
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
+              {tm("catalogTitle")}
+            </h2>
+            {hiddenCurated.length > 0 && (
+              <button
+                type="button"
+                onClick={restoreAllCurated}
+                className="text-[11px] font-medium text-teal-700 hover:underline dark:text-teal-400"
+              >
+                恢复已删除 ({hiddenCurated.length})
+              </button>
+            )}
+          </div>
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {FILTERS.map((f) => {
+            {filters.map((f) => {
               const active = filter === f;
-              const style = f === "all" ? null : categoryStyles[f];
+              const known = f === "all" || (KNOWN_CATS as string[]).includes(f);
+              const style =
+                f === "all" ? null : known ? categoryStyles[f as PoiCategory] : CUSTOM_STYLE;
+              const label = f === "all" ? t("all") : known ? t(f as PoiCategory) : f;
               return (
                 <button
                   key={f}
@@ -220,7 +256,7 @@ export default function PoiSidebar() {
                   }
                 >
                   {style ? `${style.emoji} ` : ""}
-                  {t(f === "all" ? "all" : (f as PoiCategory))}
+                  {label}
                 </button>
               );
             })}
@@ -247,18 +283,23 @@ export default function PoiSidebar() {
                       <div className="mt-0.5 text-[11px] text-slate-500">
                         {tm("durationHours", { hours: stop.duration })}
                       </div>
+                      {!stop.isCurated && !(KNOWN_CATS as string[]).includes(stop.category) && (
+                        <div className="mt-0.5 inline-block rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-medium text-pink-600 dark:bg-pink-950/40 dark:text-pink-300">
+                          📍 {stop.category}
+                        </div>
+                      )}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {!stop.isCurated && (
-                        <button
-                          type="button"
-                          onClick={() => removeCustomPin(stop.id)}
-                          aria-label="delete"
-                          className="rounded-md px-1.5 py-1 text-xs text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
-                        >
-                          ✕
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          stop.isCurated ? hideCurated(stop.id) : removeCustomPin(stop.id)
+                        }
+                        aria-label="delete"
+                        className="rounded-md px-1.5 py-1 text-xs text-slate-400 transition hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+                      >
+                        ✕
+                      </button>
                       <button
                         type="button"
                         onClick={() => addPoiToDay(selectedDay, stop.id)}

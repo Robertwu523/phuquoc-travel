@@ -33,7 +33,7 @@ type Data = {
     uv_index_max: number[];
     precipitation_probability_max: number[];
   };
-  air: { pm2_5: number; us_aqi: number };
+  air: { pm2_5: number; us_aqi: number } | null;
   fetchedAt: string;
 };
 
@@ -81,11 +81,31 @@ export default function WeatherPage() {
     (nocache: boolean) => {
       setLoading(true);
       setErr(false);
-      fetch(`/api/weather?lat=${lat}&lng=${lng}${nocache ? "&nocache=1" : ""}`)
-        .then((r) => (r.ok ? r.json() : Promise.reject()))
-        .then((d) => (d.current ? setData(d) : setErr(true)))
-        .catch(() => setErr(true))
-        .finally(() => setLoading(false));
+      const url = `/api/weather?lat=${lat}&lng=${lng}${nocache ? "&nocache=1" : ""}`;
+      const attempt = (n: number) => {
+        fetch(url)
+          .then((r) => (r.ok ? r.json() : Promise.reject()))
+          .then((d) => {
+            if (d.current) {
+              setData(d);
+              setLoading(false);
+            } else if (n < 2) {
+              setTimeout(() => attempt(n + 1), 1500);
+            } else {
+              setErr(true);
+              setLoading(false);
+            }
+          })
+          .catch(() => {
+            // transient blip → retry up to 2 times before showing the error
+            if (n < 2) setTimeout(() => attempt(n + 1), 1500);
+            else {
+              setErr(true);
+              setLoading(false);
+            }
+          });
+      };
+      attempt(0);
     },
     [lat, lng]
   );
@@ -220,23 +240,29 @@ function CurrentCard({ data }: { data: Data }) {
 
 /* ---------- air ---------- */
 function AirCard({ data }: { data: Data }) {
-  const aqi = data.air.us_aqi ?? 0;
-  const lvl = aqiLevel(aqi);
+  const aqi = data.air?.us_aqi;
+  const lvl = aqi != null ? aqiLevel(aqi) : null;
   return (
     <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-[#7EC8C8] to-[#4A9D9D] p-6 text-white shadow-sm">
       <div className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">空气质量</div>
-      <div className="mt-2 flex items-end gap-2">
-        <span className="text-5xl font-extrabold leading-none">{Math.round(aqi)}</span>
-        <span className="mb-1 text-sm text-white/80">US AQI · {lvl.label}</span>
-      </div>
-      <div className="mt-1 text-sm text-white/80">PM2.5 {data.air.pm2_5?.toFixed(0)} μg/m³</div>
-      <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/25">
-        <div className="h-full rounded-full transition-all" style={{ width: `${lvl.pct}%`, background: lvl.color }} />
-      </div>
-      <div className="mt-1 flex justify-between text-[10px] text-white/70">
-        <span>优 0</span>
-        <span>严重 300+</span>
-      </div>
+      {aqi != null && lvl ? (
+        <>
+          <div className="mt-2 flex items-end gap-2">
+            <span className="text-5xl font-extrabold leading-none">{Math.round(aqi)}</span>
+            <span className="mb-1 text-sm text-white/80">US AQI · {lvl.label}</span>
+          </div>
+          <div className="mt-1 text-sm text-white/80">PM2.5 {data.air?.pm2_5?.toFixed(0)} μg/m³</div>
+          <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/25">
+            <div className="h-full rounded-full transition-all" style={{ width: `${lvl.pct}%`, background: lvl.color }} />
+          </div>
+          <div className="mt-1 flex justify-between text-[10px] text-white/70">
+            <span>优 0</span>
+            <span>严重 300+</span>
+          </div>
+        </>
+      ) : (
+        <div className="mt-5 text-sm text-white/85">此地点暂无空气质量数据</div>
+      )}
     </div>
   );
 }

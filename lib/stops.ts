@@ -1,5 +1,5 @@
 import { pois, poiById, type POI, type PoiCategory } from "@/data/pois";
-import { categoryStyles } from "@/lib/categories";
+import { categoryStyles, styleFor } from "@/lib/categories";
 
 export type StopCategory = PoiCategory | "custom";
 export type Locale = "zh" | "en";
@@ -11,7 +11,7 @@ export type CustomPin = {
   lat: number;
   lng: number;
   duration: number; // suggested visit hours
-  category: PoiCategory; // chosen by the user when adding
+  category: string; // a known PoiCategory or a user-typed custom category
   info?: string; // optional description / recognized region
 };
 
@@ -21,14 +21,12 @@ export type MapStop = {
   name: string;
   lat: number;
   lng: number;
-  category: StopCategory;
+  category: string;
   emoji: string;
   color: string;
   duration: number;
   isCurated: boolean;
 };
-
-export const CUSTOM_STYLE = { emoji: "📍", color: "#db2777" };
 
 export function poiToMapStop(poi: POI, locale: Locale): MapStop {
   const s = categoryStyles[poi.category];
@@ -46,7 +44,7 @@ export function poiToMapStop(poi: POI, locale: Locale): MapStop {
 }
 
 export function customToMapStop(pin: CustomPin): MapStop {
-  const style = categoryStyles[pin.category] ?? CUSTOM_STYLE;
+  const style = styleFor(pin.category);
   return {
     id: pin.id,
     name: pin.name,

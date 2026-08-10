@@ -107,7 +107,9 @@
     "transportTitle": "Getting around",
     "transportBody": "Rent a scooter (~150,000-250,000 VND/day), take a taxi (Grab / Sun Taxi), or hire a car with driver for day tours. Airport to Duong Dong town is ~15 minutes.",
     "currencyTitle": "Currency",
-    "currencyBody": "Local currency is Vietnamese dong (VND), ~1 HKD ≈ 3,300 VND. Bring cash; Visa/MasterCard accepted in some places; Alipay/WeChat work in tourist areas.",
+    "currencyBody": "Live exchange rates, a currency converter (HKD/CNY/USD ↔ VND), common prices and a Vietnamese-dong guide.",
+    "toolsTitle": "Travel tools",
+    "toolsBody": "Guides, flight search, hotels, maps & itinerary tools — useful travel sites by category (marked if VPN is needed).",
     "timezoneTitle": "Time zone",
     "timezoneBody": "Phu Quoc is UTC+7, just one hour behind Hong Kong — no jet lag."
   },

@@ -16,3 +16,11 @@ export const categoryStyles: Record<PoiCategory, CategoryStyle> = {
   temple: { color: "#a855f7", emoji: "🛕" },
   culture: { color: "#8b5cf6", emoji: "🫙" },
 };
+
+/** Default style for user-defined categories (anything not in the fixed set). */
+export const CUSTOM_STYLE: CategoryStyle = { color: "#db2777", emoji: "📍" };
+
+/** Style for any category (known PoiCategory or a user-typed custom string). */
+export function styleFor(cat: string): CategoryStyle {
+  return (categoryStyles as Record<string, CategoryStyle>)[cat] ?? CUSTOM_STYLE;
+}

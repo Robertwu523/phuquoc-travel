@@ -2,8 +2,20 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
 type Block = {
-  titleKey: "visaTitle" | "seasonTitle" | "transportTitle" | "currencyTitle" | "timezoneTitle";
-  bodyKey: "visaBody" | "seasonBody" | "transportBody" | "currencyBody" | "timezoneBody";
+  titleKey:
+    | "visaTitle"
+    | "seasonTitle"
+    | "transportTitle"
+    | "currencyTitle"
+    | "timezoneTitle"
+    | "toolsTitle";
+  bodyKey:
+    | "visaBody"
+    | "seasonBody"
+    | "transportBody"
+    | "currencyBody"
+    | "timezoneBody"
+    | "toolsBody";
   emoji: string;
   href?: string; // when set, the card links to this sub-page
 };
@@ -12,7 +24,8 @@ const blocks: Block[] = [
   { titleKey: "visaTitle", bodyKey: "visaBody", emoji: "🛂", href: "/info/documents" },
   { titleKey: "seasonTitle", bodyKey: "seasonBody", emoji: "🌤️", href: "/info/weather" },
   { titleKey: "transportTitle", bodyKey: "transportBody", emoji: "🛵" },
-  { titleKey: "currencyTitle", bodyKey: "currencyBody", emoji: "💸" },
+  { titleKey: "currencyTitle", bodyKey: "currencyBody", emoji: "💸", href: "/info/currency" },
+  { titleKey: "toolsTitle", bodyKey: "toolsBody", emoji: "🧭", href: "/info/resources" },
   { titleKey: "timezoneTitle", bodyKey: "timezoneBody", emoji: "🕐" },
 ];
 
