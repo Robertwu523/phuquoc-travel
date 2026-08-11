@@ -271,7 +271,12 @@ export default function PoiSidebar() {
                   className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900"
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => setFlyTo({ lat: stop.lat, lng: stop.lng, zoom: 15 })}
+                      title="点击在地图上定位"
+                      className="min-w-0 flex-1 text-left transition hover:text-[#FF7A45]"
+                    >
                       <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {stop.emoji} {stop.name || "—"}
                         {!stop.isCurated && (
@@ -288,7 +293,7 @@ export default function PoiSidebar() {
                           📍 {stop.category}
                         </div>
                       )}
-                    </div>
+                    </button>
                     <div className="flex shrink-0 items-center gap-1">
                       <button
                         type="button"

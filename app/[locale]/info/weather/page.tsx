@@ -267,38 +267,26 @@ function AirCard({ data }: { data: Data }) {
   );
 }
 
-/* ---------- hourly trend: SVG line chart ---------- */
+/* ---------- hourly trend: Recharts AreaChart ---------- */
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
+
 function TrendCard({ data }: { data: Data }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const today = (data.current.time || data.daily.time[0]).slice(0, 10);
-  // sample every 3h: 00,03,...,21
-  const pts: { t: string; temp: number; code: number; pop: number }[] = [];
+  const pts: { time: string; temp: number; emoji: string; pop: number }[] = [];
   data.hourly.time.forEach((tm, i) => {
     if (tm.startsWith(today) && /T(00|03|06|09|12|15|18|21):00$/.test(tm)) {
       pts.push({
-        t: hh(tm),
+        time: hh(tm),
         temp: data.hourly.temperature_2m[i],
-        code: data.hourly.weather_code[i],
+        emoji: wmo(data.hourly.weather_code[i]).emoji,
         pop: data.hourly.precipitation_probability?.[i] ?? 0,
       });
     }
   });
   if (pts.length < 2) return null;
-
-  const W = 100;
-  const H = 42;
-  const temps = pts.map((p) => p.temp);
-  const min = Math.min(...temps);
-  const max = Math.max(...temps);
-  const pad = Math.max(1, (max - min) * 0.2);
-  const lo = min - pad;
-  const hi = max + pad;
-  const xy = pts.map((p, i) => {
-    const x = (i / (pts.length - 1)) * W;
-    const y = H - ((p.temp - lo) / (hi - lo)) * H;
-    return { x, y, p };
-  });
-  const line = xy.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(2)} ${c.y.toFixed(2)}`).join(" ");
-  const area = `${line} L ${W} ${H} L 0 ${H} Z`;
 
   return (
     <div className="rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -306,28 +294,60 @@ function TrendCard({ data }: { data: Data }) {
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">今日气温走势</h3>
         <span className="text-xs text-slate-400">{dateLabel(today)}</span>
       </div>
-      <div className="mt-4">
-        <svg viewBox={`0 0 ${W} ${H + 12}`} preserveAspectRatio="none" className="h-40 w-full">
-          <defs>
-            <linearGradient id="wxarea" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FF7A45" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#FF7A45" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={area} fill="url(#wxarea)" />
-          <path d={line} fill="none" stroke="#FF7A45" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-          {xy.map((c, i) => (
-            <circle key={i} cx={c.x} cy={c.y} r="1.1" fill="#fff" stroke="#FF7A45" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-          ))}
-        </svg>
+
+      {/* Recharts AreaChart */}
+      <div className="mt-4" style={{ width: "100%", height: 180 }}>
+        {mounted ? (
+          <ResponsiveContainer>
+            <AreaChart data={pts} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+              <defs>
+                <linearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--chart-color, #FF7A45)" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="var(--chart-color, #FF7A45)" stopOpacity={0.02} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis hide domain={["dataMin - 2", "dataMax + 2"]} />
+              <Tooltip
+                contentStyle={{
+                  border: "none",
+                  borderRadius: 12,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  fontSize: 13,
+                  padding: "8px 12px",
+                }}
+                labelStyle={{ color: "#94a3b8", fontSize: 11 }}
+                formatter={(v) => [`${Math.round(Number(v))}°C`, "气温"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="temp"
+                stroke="var(--chart-color, #FF7A45)"
+                strokeWidth={2.5}
+                fill="url(#tempGrad)"
+                dot={{ fill: "#fff", stroke: "var(--chart-color, #FF7A45)", strokeWidth: 2, r: 3.5 }}
+                activeDot={{ r: 5, stroke: "var(--chart-color, #FF7A45)", strokeWidth: 2, fill: "#fff" }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="h-full animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
+        )}
       </div>
-      <div className="mt-2 grid grid-cols-8 gap-1 text-center">
+
+      {/* hourly detail row */}
+      <div className="mt-3 grid grid-cols-8 gap-1 text-center">
         {pts.map((p, i) => (
           <div key={i}>
             <div className="text-[11px] font-bold text-slate-900 dark:text-white">{Math.round(p.temp)}°</div>
-            <div className="text-sm">{wmo(p.code).emoji}</div>
+            <div className="text-sm">{p.emoji}</div>
             {p.pop > 0 && <div className="text-[9px] text-sky-500">💧{p.pop}%</div>}
-            <div className="text-[10px] text-slate-400">{p.t}</div>
+            <div className="text-[10px] text-slate-400">{p.time}</div>
           </div>
         ))}
       </div>
