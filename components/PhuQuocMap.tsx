@@ -328,17 +328,18 @@ export default function PhuQuocMap() {
                   <ReviewButtons name={stop.name} locale={locale} />
                   <button
                     type="button"
-                    disabled={added}
-                    onClick={() => addPoiToDay(selectedDay, stop.id)}
+                    onClick={() =>
+                      added ? removePoiFromDay(selectedDay, stop.id) : addPoiToDay(selectedDay, stop.id)
+                    }
                     className={
                       "mt-2 w-full rounded-md px-2 py-1.5 text-xs font-semibold transition " +
                       (added
-                        ? "cursor-default bg-teal-100 text-teal-700"
+                        ? "bg-teal-100 text-teal-700 hover:bg-red-50 hover:text-red-600 dark:bg-teal-900/40 dark:text-teal-300 dark:hover:bg-red-950/40"
                         : "bg-teal-600 text-white hover:bg-teal-700")
                     }
                   >
                     {added
-                      ? t("added", { day: selectedDay + 1 })
+                      ? `${t("added", { day: selectedDay + 1 })} · ${tp("remove")}`
                       : `${t("addToTrip")} · ${tp("day", { n: selectedDay + 1 })}`}
                   </button>
                   <button
