@@ -5,16 +5,12 @@ import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
 
-const TABS = [
-  { key: "trip", href: "/trip", label: "我的行程", emoji: "📋" },
-  { key: "me", href: "/me", label: "我的", emoji: "👤" },
-] as const;
-
-// tool links: icon-only buttons (kept subtle, not competing with main tabs)
-const TOOLS = [
+const NAV_ITEMS = [
   { href: "/map", label: "地图", emoji: "🗺️" },
+  { href: "/trip", label: "行程", emoji: "📋" },
   { href: "/flights", label: "机票", emoji: "✈️" },
   { href: "/info", label: "信息", emoji: "📘" },
+  { href: "/me", label: "我的", emoji: "👤" },
 ] as const;
 
 export default function SiteHeader() {
@@ -60,14 +56,14 @@ export default function SiteHeader() {
         </Link>
 
         <div className="flex flex-1 items-center justify-center gap-2">
-          {/* main tabs: prominent pill buttons */}
+          {/* all nav items unified style */}
           <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white/70 p-1 backdrop-blur dark:border-slate-700 dark:bg-slate-900/70">
-            {TABS.map((tab) => {
-              const active = isActive(tab.href);
+            {NAV_ITEMS.map((item) => {
+              const active = isActive(item.href);
               return (
                 <Link
-                  key={tab.key}
-                  href={tab.href}
+                  key={item.href}
+                  href={item.href}
                   className={
                     "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition " +
                     (transparent
@@ -79,38 +75,8 @@ export default function SiteHeader() {
                       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800")
                   }
                 >
-                  <span className="text-base">{tab.emoji}</span>
-                  {tab.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* divider */}
-          <div className="hidden h-5 w-px bg-slate-300/50 sm:block dark:bg-slate-700/60" />
-
-          {/* tool icons: subtle, grouped */}
-          <div className="hidden items-center gap-0.5 sm:flex">
-            {TOOLS.map((tool) => {
-              const active = isActive(tool.href);
-              return (
-                <Link
-                  key={tool.href}
-                  href={tool.href}
-                  title={tool.label}
-                  className={
-                    "flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-medium transition " +
-                    (transparent
-                      ? active
-                        ? "bg-white/20 text-white"
-                        : "text-white/70 hover:bg-white/10 hover:text-white"
-                      : active
-                      ? "bg-[#FF7A45]/15 text-[#FF7A45]"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800")
-                  }
-                >
-                  <span className="text-sm">{tool.emoji}</span>
-                  <span className="hidden lg:inline">{tool.label}</span>
+                  <span className="text-base">{item.emoji}</span>
+                  {item.label}
                 </Link>
               );
             })}
@@ -122,33 +88,23 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      {/* mobile: main tabs + tools scrollable */}
+      {/* mobile: all items scrollable */}
       <div
         className={
           "flex items-center gap-2 overflow-x-auto px-4 pb-1.5 md:hidden " +
           (transparent ? "text-white/85" : "text-slate-600 dark:text-slate-300")
         }
       >
-        {TABS.map((tab) => (
+        {NAV_ITEMS.map((item) => (
           <Link
-            key={tab.key}
-            href={tab.href}
+            key={item.href}
+            href={item.href}
             className={
               "whitespace-nowrap text-xs font-semibold " +
-              (isActive(tab.href) ? "text-[#FF7A45]" : "")
+              (isActive(item.href) ? "text-[#FF7A45]" : "")
             }
           >
-            {tab.emoji} {tab.label}
-          </Link>
-        ))}
-        <span className="text-slate-300 dark:text-slate-600">·</span>
-        {TOOLS.map((tool) => (
-          <Link
-            key={tool.href}
-            href={tool.href}
-            className="whitespace-nowrap text-[11px] font-medium"
-          >
-            {tool.emoji} {tool.label}
+            {item.emoji} {item.label}
           </Link>
         ))}
       </div>

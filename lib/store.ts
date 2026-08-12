@@ -15,6 +15,10 @@ type TripState = {
   dayAssignments: Record<number, string[]>;
   /** registry of user-dropped custom pins, keyed by id */
   customPins: Record<string, CustomPin>;
+  /** per-stop custom duration overrides: key = `${day}-${idx}` → hours */
+  stopDurations: Record<string, number>;
+  /** per-stop explicit start time (minutes from midnight): key = `${day}-${idx}` */
+  stopStartTimes: Record<string, number>;
   /** ids of curated POIs the user has deleted from their catalog */
   hiddenCurated: string[];
   _hasHydrated: boolean;
@@ -27,6 +31,10 @@ type TripState = {
   addPoiToDay: (day: number, poiId: string) => void;
   removePoiFromDay: (day: number, poiId: string) => void;
   movePoi: (day: number, index: number, dir: -1 | 1) => void;
+  setStopDuration: (day: number, idx: number, hours: number) => void;
+  setStopStartTime: (day: number, idx: number, minutes: number) => void;
+  /** drag a stop from one index to another within a day */
+  dragMove: (day: number, fromIdx: number, toIdx: number) => void;
   setDayOrder: (day: number, ids: string[]) => void;
   clearDay: (day: number) => void;
   clearAll: () => void;
@@ -65,6 +73,8 @@ export const useTripStore = create<TripState>()(
       selectedDay: 0,
       dayAssignments: {},
       customPins: {},
+      stopDurations: {},
+      stopStartTimes: {},
       hiddenCurated: [],
       _hasHydrated: false,
       flyTo: null,
@@ -107,7 +117,23 @@ export const useTripStore = create<TripState>()(
         set((s) => ({ dayAssignments: { ...s.dayAssignments, [day]: [] } })),
       setDayOrder: (day, ids) =>
         set((s) => ({ dayAssignments: { ...s.dayAssignments, [day]: ids } })),
-      clearAll: () => set({ dayAssignments: {} }),
+      dragMove: (day, fromIdx, toIdx) =>
+        set((s) => {
+          const list = [...(s.dayAssignments[day] ?? [])];
+          if (fromIdx < 0 || fromIdx >= list.length || toIdx < 0 || toIdx >= list.length) return {};
+          const [item] = list.splice(fromIdx, 1);
+          list.splice(toIdx, 0, item);
+          return { dayAssignments: { ...s.dayAssignments, [day]: list } };
+        }),
+      setStopDuration: (day, idx, hours) =>
+        set((s) => ({
+          stopDurations: { ...s.stopDurations, [`${day}-${idx}`]: Math.max(0.25, Math.min(24, hours)) },
+        })),
+      setStopStartTime: (day, idx, minutes) =>
+        set((s) => ({
+          stopStartTimes: { ...s.stopStartTimes, [`${day}-${idx}`]: Math.max(0, Math.min(23 * 60 + 59, minutes)) },
+        })),
+      clearAll: () => set({ dayAssignments: {}, stopDurations: {}, stopStartTimes: {} }),
 
       addCustomPin: (pin) =>
         set((s) => ({ customPins: { ...s.customPins, [pin.id]: pin } })),
@@ -168,6 +194,8 @@ export const useTripStore = create<TripState>()(
         selectedDay: s.selectedDay,
         dayAssignments: s.dayAssignments,
         customPins: s.customPins,
+        stopDurations: s.stopDurations,
+        stopStartTimes: s.stopStartTimes,
         hiddenCurated: s.hiddenCurated,
       }),
       onRehydrateStorage: () => (state) => state?.setHasHydrated(true),

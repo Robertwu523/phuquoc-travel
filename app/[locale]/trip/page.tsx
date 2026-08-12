@@ -6,7 +6,6 @@ import { useTripStore, selectTotalPois } from "@/lib/store";
 import { resolveStop, type MapStop, type Locale } from "@/lib/stops";
 import { styleFor, categoryStyles } from "@/lib/categories";
 import { pois } from "@/data/pois";
-import ExploreSection from "@/components/ExploreSection";
 import ExpenseTracker from "@/components/ExpenseTracker";
 import { Link } from "@/i18n/navigation";
 
@@ -23,17 +22,16 @@ const HOUR_LABELS = Array.from({ length: HOURS + 1 }, (_, i) => {
   return `${String(h).padStart(2, "0")}:00`;
 });
 
-type Tab = "timeline" | "explore" | "expenses";
+type Tab = "timeline" | "expenses";
 
-type NavStop = { lat: number; lng: number; name: string };
-
-function computeSchedule(stops: MapStop[]) {
-  let t = 9 * 60; // start at 09:00
-  return stops.map((stop) => {
-    const start = t;
-    const dur = Math.max(30, stop.duration * 60);
+function computeSchedule(stops: MapStop[], durArr: number[], startArr: number[]) {
+  let autoT = 9 * 60; // fallback auto-start at 09:00
+  return stops.map((stop, i) => {
+    const start = startArr[i] >= 0 ? startArr[i] : autoT;
+    const useHours = durArr[i] > 0 ? durArr[i] : stop.duration;
+    const dur = Math.max(15, useHours * 60);
     const end = start + dur;
-    t = end + TRAVEL_MIN;
+    autoT = end + TRAVEL_MIN;
     return { stop, startMin: start, endMin: end };
   });
 }
@@ -71,14 +69,26 @@ export default function Page() {
   const customPins = useTripStore((s) => s.customPins);
   const removePoiFromDay = useTripStore((s) => s.removePoiFromDay);
   const addPoiToDay = useTripStore((s) => s.addPoiToDay);
+  const dragMove = useTripStore((s) => s.dragMove);
+  const stopDurations = useTripStore((s) => s.stopDurations);
+  const stopStartTimes = useTripStore((s) => s.stopStartTimes);
+  const setStopDuration = useTripStore((s) => s.setStopDuration);
+  const setStopStartTime = useTripStore((s) => s.setStopStartTime);
   const total = useTripStore(selectTotalPois);
   const [tab, setTab] = useState<Tab>("timeline");
   const [addSlot, setAddSlot] = useState<{ day: number; timeMin: number; x: number; y: number } | null>(null);
   const [addQuery, setAddQuery] = useState("");
+  const [dragInfo, setDragInfo] = useState<{
+    day: number; fromIdx: number; stopId: string;
+    startX: number; moved: boolean; origLeft: number;
+    trackEl: HTMLElement | null;
+  } | null>(null);
+  const [editDur, setEditDur] = useState<{ day: number; idx: number; stopId: string; value: number } | null>(null);
+  const [customEvent, setCustomEvent] = useState<{ day: number; timeMin: number } | null>(null);
   const [hovered, setHovered] = useState<{
     day: number; stopId: string; stopName: string; stopEmoji: string;
     startLabel: string; endLabel: string; duration: number; lat: number; lng: number;
-    isCurated: boolean; blockRect: DOMRect;
+    isCurated: boolean; blockRect: DOMRect; idx: number;
   } | null>(null);
   const hoverTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -104,7 +114,6 @@ export default function Page() {
 
   const TABS: { key: Tab; label: string; emoji: string }[] = [
     { key: "timeline", label: "行程", emoji: "📋" },
-    { key: "explore", label: "探索", emoji: "🧭" },
     { key: "expenses", label: "记账", emoji: "💰" },
   ];
 
@@ -158,12 +167,8 @@ export default function Page() {
                 <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center dark:border-slate-700">
                   <p className="text-sm text-slate-500">还没有安排景点。</p>
                   <div className="mt-3 flex justify-center gap-2">
-                    <button type="button" onClick={() => setTab("explore")}
-                      className="rounded-full bg-[#FF7A45] px-5 py-2 text-sm font-semibold text-white">
-                      探索路线
-                    </button>
-                    <Link href="/map" className="rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-600">
-                      地图选点
+                    <Link href="/map" className="rounded-full bg-[#FF7A45] px-5 py-2 text-sm font-semibold text-white">
+                      去地图选点 →
                     </Link>
                   </div>
                 </div>
@@ -189,7 +194,9 @@ export default function Page() {
                   {dayArr.map((dayIdx) => {
                     const ids = dayAssignments[dayIdx] ?? [];
                     const stops = ids.map((id) => resolveStop(id, customPins, locale)).filter(Boolean) as MapStop[];
-                    const schedule = computeSchedule(stops);
+                    const durArr = ids.map((_, i) => stopDurations[`${dayIdx}-${i}`] ?? -1);
+                    const startArr = ids.map((_, i) => stopStartTimes[`${dayIdx}-${i}`] ?? -1);
+                    const schedule = computeSchedule(stops, durArr, startArr);
                     const totalMin = schedule.length > 0
                       ? schedule[schedule.length - 1].endMin - schedule[0].startMin
                       : 0;
@@ -201,9 +208,6 @@ export default function Page() {
                           <div className="text-xs font-bold text-slate-900 dark:text-white">第 {dayIdx + 1} 天</div>
                           <div className="text-[10px] text-slate-400">{dateForDay(dayIdx)}</div>
                           <div className="mt-0.5 text-[10px] text-[#FF7A45]">{stops.length} 站</div>
-                          {totalMin > 0 && (
-                            <div className="text-[9px] text-slate-400">{Math.floor(totalMin / 60)}h{totalMin % 60 ? `${totalMin % 60}m` : ""}</div>
-                          )}
                         </div>
 
                         {/* timeline track */}
@@ -226,21 +230,56 @@ export default function Page() {
                               style={{ left: i * PX_PER_HOUR }} />
                           ))}
 
-                          {/* stop blocks */}
-                          {schedule.map(({ stop, startMin, endMin }) => {
+                          {/* stop blocks with pointer-event free drag */}
+                          {schedule.map(({ stop, startMin, endMin }, i) => {
                             const st = styleFor(stop.category);
                             const left = minToX(startMin);
                             const width = Math.max(40, ((endMin - startMin) / 60) * PX_PER_HOUR);
                             return (
-                              <div key={stop.id} className="absolute top-1.5 z-10" style={{ left, width }}
+                              <div
+                                key={stop.id + i}
+                                className="absolute top-1.5 z-10 cursor-grab active:cursor-grabbing"
+                                style={{ left, width, opacity: dragInfo?.fromIdx === i && dragInfo?.day === dayIdx ? 0.35 : 1 }}
+                                onPointerDown={(e) => {
+                                  if (e.button !== 0) return;
+                                  e.currentTarget.setPointerCapture(e.pointerId);
+                                  const trackEl = e.currentTarget.parentElement!;
+                                  setDragInfo({
+                                    day: dayIdx, fromIdx: i, stopId: stop.id,
+                                    startX: e.clientX, moved: false,
+                                    origLeft: left, trackEl,
+                                  });
+                                }}
+                                onPointerMove={(e) => {
+                                  if (!dragInfo || dragInfo.day !== dayIdx || dragInfo.fromIdx !== i) return;
+                                  const dx = e.clientX - dragInfo.startX;
+                                  if (!dragInfo.moved && Math.abs(dx) < 5) return;
+                                  setDragInfo({ ...dragInfo, moved: true });
+                                  // snap to 15-min
+                                  const newLeft = Math.max(0, Math.min(TIMELINE_WIDTH - width, dragInfo.origLeft + dx));
+                                  e.currentTarget.style.left = `${newLeft}px`;
+                                }}
+                                onPointerUp={(e) => {
+                                  if (!dragInfo || dragInfo.day !== dayIdx || dragInfo.fromIdx !== i) return;
+                                  e.currentTarget.releasePointerCapture(e.pointerId);
+                                  if (dragInfo.moved) {
+                                    const curLeft = parseFloat(e.currentTarget.style.left) || dragInfo.origLeft;
+                                    const timeMin = Math.round((curLeft / PX_PER_HOUR + START_HOUR) * 60 / 15) * 15;
+                                    setStopStartTime(dayIdx, i, timeMin);
+                                    e.currentTarget.style.left = `${minToX(timeMin)}px`;
+                                  }
+                                  setDragInfo(null);
+                                }}
                                 onMouseEnter={(e) => {
+                                  if (dragInfo) return;
                                   if (hoverTimer.current) clearTimeout(hoverTimer.current);
                                   const r = e.currentTarget.getBoundingClientRect();
                                   setHovered({
                                     day: dayIdx, stopId: stop.id, stopName: stop.name || "",
                                     stopEmoji: stop.emoji, startLabel: minToLabel(startMin),
-                                    endLabel: minToLabel(endMin), duration: stop.duration,
+                                    endLabel: minToLabel(endMin), duration: (endMin - startMin) / 60,
                                     lat: stop.lat, lng: stop.lng, isCurated: stop.isCurated, blockRect: r,
+                                    idx: i,
                                   });
                                 }}
                                 onMouseLeave={() => {
@@ -248,7 +287,6 @@ export default function Page() {
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                {/* colored block */}
                                 <div
                                   className="flex h-[44px] items-center gap-1 rounded-lg px-1.5 text-white shadow-sm transition hover:brightness-110 hover:shadow-lg"
                                   style={{ background: st.color, width: "100%" }}
@@ -274,7 +312,7 @@ export default function Page() {
                   {/* floating hover card (rendered once, outside overflow) */}
                   {hovered && (
                     <div
-                      className="fixed z-[2000] min-w-[220px] rounded-xl border border-slate-200 bg-white p-3 shadow-xl transition-opacity duration-150 dark:border-slate-700 dark:bg-slate-900"
+                      className="fixed z-[2000] min-w-[240px] rounded-xl border border-slate-200 bg-white p-3 shadow-xl transition-opacity duration-150 dark:border-slate-700 dark:bg-slate-900"
                       style={{
                         top: hovered.blockRect.bottom + 4,
                         left: hovered.blockRect.left,
@@ -284,12 +322,29 @@ export default function Page() {
                     >
                       <div className="flex items-center gap-2">
                         <span className="text-lg">{hovered.stopEmoji}</span>
-                        <div>
+                        <div className="flex-1">
                           <div className="text-sm font-bold text-slate-900 dark:text-white">{hovered.stopName}</div>
                           <div className="text-[10px] text-slate-400">{hovered.startLabel} – {hovered.endLabel}</div>
                         </div>
+                        {/* duration editor */}
+                        <div className="flex items-center gap-0.5 rounded-md border border-slate-200 px-1 dark:border-slate-700">
+                          <button type="button"
+                            onClick={() => {
+                              const newD = Math.max(0.25, hovered.duration - 0.25);
+                              setStopDuration(hovered.day, hovered.idx, newD);
+                              setHovered({ ...hovered, duration: newD });
+                            }}
+                            className="px-1 text-xs text-slate-500 hover:text-[#FF7A45]">−</button>
+                          <span className="w-8 text-center text-[10px] font-bold text-slate-700 dark:text-slate-200">{hovered.duration < 1 ? `${Math.round(hovered.duration * 60)}m` : `${hovered.duration.toFixed(1)}h`}</span>
+                          <button type="button"
+                            onClick={() => {
+                              const newD = Math.min(12, hovered.duration + 0.25);
+                              setStopDuration(hovered.day, hovered.idx, newD);
+                              setHovered({ ...hovered, duration: newD });
+                            }}
+                            className="px-1 text-xs text-slate-500 hover:text-[#FF7A45]">+</button>
+                        </div>
                       </div>
-                      <div className="mt-1.5 text-[11px] text-slate-500">⏱ {hovered.duration}h · {hovered.isCurated ? "收录" : "自定义"}</div>
                       <div className="text-[10px] text-slate-400">📍 {hovered.lat.toFixed(4)}, {hovered.lng.toFixed(4)}</div>
                       <div className="mt-2 flex gap-1">
                         <a target="_blank" rel="noopener noreferrer"
@@ -302,6 +357,7 @@ export default function Page() {
                           onClick={() => { removePoiFromDay(hovered.day, hovered.stopId); setHovered(null); }}
                           className="rounded-md bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 dark:bg-red-950/30">✕</button>
                       </div>
+                      <div className="mt-1.5 text-[9px] text-slate-300">💡 拖拽色块可调整顺序 · ± 修改时长</div>
                     </div>
                   )}
 
@@ -328,8 +384,26 @@ export default function Page() {
                             </button>
                           ))}
                           {addQuery && pickableStops(customPins, locale, addQuery).length === 0 && (
-                            <p className="py-4 text-center text-xs text-slate-400">无匹配景点，先去地图/探索添加</p>
+                            <p className="py-4 text-center text-xs text-slate-400">无匹配景点</p>
                           )}
+                        </div>
+
+                        {/* custom event creator */}
+                        <div className="mt-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">或添加自定义事件</div>
+                          <CustomEventForm
+                            onSave={(name, emoji, hours) => {
+                              const id = `evt-${Date.now()}`;
+                              useTripStore.getState().addCustomPin({
+                                id, name, lat: 10.2, lng: 104.0, duration: hours, category: "culture",
+                              });
+                              addPoiToDay(addSlot.day, id);
+                              const newIdx = (useTripStore.getState().dayAssignments[addSlot.day]?.length ?? 1) - 1;
+                              setStopDuration(addSlot.day, newIdx, hours);
+                              setStopStartTime(addSlot.day, newIdx, addSlot.timeMin);
+                              setAddSlot(null);
+                            }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -344,13 +418,6 @@ export default function Page() {
             </div>
           )}
 
-          {/* ===== EXPLORE TAB ===== */}
-          {tab === "explore" && (
-            <div className="mt-4">
-              <ExploreSection />
-            </div>
-          )}
-
           {/* ===== EXPENSES TAB ===== */}
           {tab === "expenses" && (
             <div className="mt-4 max-w-2xl">
@@ -359,6 +426,38 @@ export default function Page() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function CustomEventForm({ onSave }: { onSave: (name: string, emoji: string, hours: number) => void }) {
+  const [name, setName] = useState("");
+  const [emoji, setEmoji] = useState("📌");
+  const [hours, setHours] = useState("1");
+  const EMOJIS = ["📌", "🍽️", "☕", "🛍️", "💆", "🏊", "📸", "🚕", "🛏️", "🎉"];
+
+  return (
+    <div className="mt-1.5 space-y-1.5">
+      <div className="flex gap-1.5">
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="事件名称（如：海鲜大餐）"
+          className="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#FF7A45] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+        <input type="number" min="0.25" step="0.25" value={hours} onChange={(e) => setHours(e.target.value)}
+          className="w-14 rounded-lg border border-slate-300 bg-white px-1.5 py-1.5 text-center text-sm text-slate-900 focus:border-[#FF7A45] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+        <span className="flex items-center text-[10px] text-slate-400">h</span>
+      </div>
+      <div className="flex flex-wrap gap-0.5">
+        {EMOJIS.map((em) => (
+          <button key={em} type="button" onClick={() => setEmoji(em)}
+            className={"rounded px-1 py-0.5 text-sm transition " + (emoji === em ? "bg-[#FF7A45]/20 ring-1 ring-[#FF7A45]" : "hover:bg-slate-100 dark:hover:bg-slate-800")}>
+            {em}
+          </button>
+        ))}
+      </div>
+      <button type="button" disabled={!name.trim()}
+        onClick={() => onSave(name.trim(), emoji, Math.max(0.25, Number(hours) || 1))}
+        className="w-full rounded-lg bg-[#FF7A45] py-1.5 text-xs font-bold text-white transition hover:bg-[#e6662e] disabled:opacity-40">
+        + 添加事件
+      </button>
     </div>
   );
 }
