@@ -341,7 +341,7 @@ function TrendCard({ data }: { data: Data }) {
       </div>
 
       {/* hourly detail row */}
-      <div className="mt-3 grid grid-cols-8 gap-1 text-center">
+      <div className="mt-3 grid grid-cols-4 gap-1 text-center sm:grid-cols-8">
         {pts.map((p, i) => (
           <div key={i}>
             <div className="text-[11px] font-bold text-slate-900 dark:text-white">{Math.round(p.temp)}°</div>

@@ -91,6 +91,7 @@ export default function Page() {
     isCurated: boolean; blockRect: DOMRect; idx: number;
   } | null>(null);
   const hoverTimer = useRef<NodeJS.Timeout | null>(null);
+  const justDragged = useRef(false);
 
   const dayArr = Array.from({ length: days }, (_, i) => i);
 
@@ -118,7 +119,7 @@ export default function Page() {
   ];
 
   return (
-    <div className="pt-16">
+    <div className="pt-24 md:pt-16">
       {!hydrated ? (
         <div className="mx-auto max-w-7xl px-4 py-20">
           <div className="h-40 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800/60" />
@@ -215,6 +216,7 @@ export default function Page() {
                           className="relative cursor-pointer"
                           style={{ width: TIMELINE_WIDTH, minWidth: TIMELINE_WIDTH, minHeight: 56 }}
                           onClick={(e) => {
+                            if (hovered) { setHovered(null); return; }
                             const rect = e.currentTarget.getBoundingClientRect();
                             const x = e.clientX - rect.left;
                             const timeMin = Math.round((x / PX_PER_HOUR + START_HOUR) * 60 / 30) * 30;
@@ -263,6 +265,7 @@ export default function Page() {
                                   if (!dragInfo || dragInfo.day !== dayIdx || dragInfo.fromIdx !== i) return;
                                   e.currentTarget.releasePointerCapture(e.pointerId);
                                   if (dragInfo.moved) {
+                                    justDragged.current = true;
                                     const curLeft = parseFloat(e.currentTarget.style.left) || dragInfo.origLeft;
                                     const timeMin = Math.round((curLeft / PX_PER_HOUR + START_HOUR) * 60 / 15) * 15;
                                     setStopStartTime(dayIdx, i, timeMin);
@@ -285,7 +288,21 @@ export default function Page() {
                                 onMouseLeave={() => {
                                   hoverTimer.current = setTimeout(() => setHovered(null), 200);
                                 }}
-                                onClick={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (justDragged.current) { justDragged.current = false; return; }
+                                  if (hovered && hovered.day === dayIdx && hovered.idx === i) {
+                                    setHovered(null);
+                                  } else {
+                                    const r = e.currentTarget.getBoundingClientRect();
+                                    setHovered({
+                                      day: dayIdx, stopId: stop.id, stopName: stop.name || "",
+                                      stopEmoji: stop.emoji, startLabel: minToLabel(startMin),
+                                      endLabel: minToLabel(endMin), duration: (endMin - startMin) / 60,
+                                      lat: stop.lat, lng: stop.lng, isCurated: stop.isCurated, blockRect: r, idx: i,
+                                    });
+                                  }
+                                }}
                               >
                                 <div
                                   className="flex h-[44px] items-center gap-1 rounded-lg px-1.5 text-white shadow-sm transition hover:brightness-110 hover:shadow-lg"
@@ -314,8 +331,8 @@ export default function Page() {
                     <div
                       className="fixed z-[2000] min-w-[240px] rounded-xl border border-slate-200 bg-white p-3 shadow-xl transition-opacity duration-150 dark:border-slate-700 dark:bg-slate-900"
                       style={{
-                        top: hovered.blockRect.bottom + 4,
-                        left: hovered.blockRect.left,
+                        top: Math.min(hovered.blockRect.bottom + 4, (typeof window !== "undefined" ? window.innerHeight : 9999) - 230),
+                        left: Math.max(8, Math.min(hovered.blockRect.left, (typeof window !== "undefined" ? window.innerWidth : 9999) - 260)),
                       }}
                       onMouseEnter={() => { if (hoverTimer.current) clearTimeout(hoverTimer.current); }}
                       onMouseLeave={() => setHovered(null)}

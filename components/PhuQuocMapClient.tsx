@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 const PhuQuocMap = dynamic(() => import("./PhuQuocMap"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-[420px] items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-400">
+    <div className="flex h-full min-h-[260px] items-center justify-center rounded-2xl bg-slate-100 text-sm text-slate-400 md:min-h-[420px]">
       Loading map…
     </div>
   ),

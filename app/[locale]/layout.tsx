@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
@@ -20,6 +20,11 @@ const geistMono = Geist_Mono({
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export async function generateMetadata({
   params,
@@ -52,7 +57,7 @@ export default async function LocaleLayout({
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
         <NextIntlClientProvider messages={messages}>
           <SiteHeader />
-          <main className="flex-1 pt-16">{children}</main>
+          <main className="flex-1 pt-24 md:pt-16">{children}</main>
         </NextIntlClientProvider>
       </body>
     </html>

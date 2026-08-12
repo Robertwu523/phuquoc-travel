@@ -34,13 +34,13 @@ export default function SiteHeader() {
   return (
     <header
       className={
-        "fixed inset-x-0 top-0 z-[1000] h-16 transition-colors duration-300 " +
+        "fixed inset-x-0 top-0 z-[1000] h-auto transition-colors duration-300 md:h-16 " +
         (transparent
           ? "bg-transparent"
           : "border-b border-slate-200/70 bg-white/85 backdrop-blur-md dark:border-slate-800/70 dark:bg-slate-950/85")
       }
     >
-      <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4">
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
         {/* brand */}
         <Link
           href="/"
@@ -57,7 +57,7 @@ export default function SiteHeader() {
 
         <div className="flex flex-1 items-center justify-center gap-2">
           {/* all nav items unified style */}
-          <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white/70 p-1 backdrop-blur dark:border-slate-700 dark:bg-slate-900/70">
+          <div className="hidden items-center gap-1 rounded-full border border-slate-200 bg-white/70 p-1 backdrop-blur md:flex dark:border-slate-700 dark:bg-slate-900/70">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               return (

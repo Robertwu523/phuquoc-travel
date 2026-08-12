@@ -327,7 +327,7 @@ export default function ExpenseTracker({ days }: { days: number }) {
                 <button
                   type="button"
                   onClick={() => deleteExpense(e.id)}
-                  className="shrink-0 px-1.5 text-xs text-slate-300 opacity-0 transition hover:text-red-500 group-hover:opacity-100"
+                  className="shrink-0 px-1.5 text-xs text-slate-300 opacity-0 transition hover:text-red-500 group-hover:opacity-100 max-md:opacity-100"
                 >
                   ✕
                 </button>

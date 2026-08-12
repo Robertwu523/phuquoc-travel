@@ -170,7 +170,7 @@ export default function DocChecklist({ groups }: { groups: ChecklistGroup[] }) {
                             {item.text}
                           </span>
                         </button>
-                        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100">
+                        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition group-hover:opacity-100 max-md:opacity-100">
                           <button type="button" onClick={() => startEdit(item)} className="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-[#FF7A45]" aria-label="edit">✏️</button>
                           <button type="button" onClick={() => deleteItem(item.id)} className="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:text-red-500" aria-label="delete">✕</button>
                         </div>
