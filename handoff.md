@@ -333,6 +333,8 @@
 
 **已知限制**：邮箱确认开启时注册需收信点链接；Google 登录按钮已就绪但需用户配 OAuth client 才激活。
 
+**构建修复（`fd16072`）**：首次推送后 Netlify 构建失败——`AuthProvider.syncNow` 误用了 `pullAll`（`lib/sync.ts` 实际导出的是 `pushAll`），`next build` 严格类型检查报错（本地 `dev` 不查类型故漏网）。已改正并在推送前跑 `npm run build` 全量验证通过。**教训**：重大改动后应本地 `npm run build` 而非只靠 `dev`，因 `dev` 不做完整类型检查。
+
 ---
 
 ## 十三、当前文件结构
