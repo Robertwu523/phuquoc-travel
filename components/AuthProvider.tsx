@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
-import { pullAndMerge, startSync, stopSync } from "@/lib/sync";
+import { pullAndMerge, pushAll, startSync, stopSync } from "@/lib/sync";
 import { useTripStore, subscribeTripSync } from "@/lib/store";
 
 type SyncStatus = "idle" | "syncing" | "synced" | "error";
@@ -83,11 +83,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     syncStatus,
     lastSyncAt,
     async syncNow() {
-      const { pullAll } = await import("@/lib/sync");
       setSyncStatus("syncing");
       try {
         await pullAndMerge();
-        await pullAll();
+        await pushAll();
         setSyncStatus("synced");
         setLastSyncAt(Date.now());
       } catch {
