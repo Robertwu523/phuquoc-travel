@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
+import UserMenu from "./UserMenu";
 
 const NAV_ITEMS = [
   { href: "/map", label: "地图", emoji: "🗺️" },
@@ -83,8 +84,9 @@ export default function SiteHeader() {
           </div>
         </div>
 
-        <div className="ml-auto shrink-0">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <LanguageSwitcher />
+          <UserMenu />
         </div>
       </div>
 

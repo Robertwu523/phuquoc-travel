@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { markDirty } from "@/lib/sync";
 
 type Currency = "VND" | "HKD" | "USD" | "CNY";
 type Category = "food" | "transport" | "hotel" | "activity" | "shopping" | "other";
@@ -71,6 +72,7 @@ export default function ExpenseTracker({ days }: { days: number }) {
     setExpenses(list);
     try {
       localStorage.setItem(KEY, JSON.stringify(list));
+      markDirty(KEY);
     } catch {
       /* ignore */
     }
@@ -80,6 +82,7 @@ export default function ExpenseTracker({ days }: { days: number }) {
     setBudget(v);
     try {
       localStorage.setItem(BUDGET_KEY, String(v));
+      markDirty(BUDGET_KEY);
     } catch {
       /* ignore */
     }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTripStore } from "@/lib/store";
+import { markDirty } from "@/lib/sync";
 import {
   googleFlightsUrl,
   skyscannerUrl,
@@ -98,6 +99,7 @@ export default function FlightPanel() {
     setFlights(f);
     try {
       localStorage.setItem(FKEY, JSON.stringify(f));
+      markDirty(FKEY);
     } catch {
       /* ignore */
     }

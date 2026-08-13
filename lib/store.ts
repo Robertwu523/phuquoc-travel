@@ -205,3 +205,29 @@ export const useTripStore = create<TripState>()(
 
 export const selectTotalPois = (s: TripState) =>
   Object.values(s.dayAssignments).reduce((acc, list) => acc + list.length, 0);
+
+/**
+ * Subscribe to persisted-state changes and flag them for cloud sync.
+ * Returns an unsubscribe fn. Call only after hydration + login, to avoid
+ * echoing the rehydrate itself or syncing logged-out usage.
+ */
+export function subscribeTripSync() {
+  let lastSnapshot = "";
+  return useTripStore.subscribe((s) => {
+    if (!s._hasHydrated) return;
+    const snap = JSON.stringify({
+      startDate: s.startDate,
+      days: s.days,
+      selectedDay: s.selectedDay,
+      dayAssignments: s.dayAssignments,
+      customPins: s.customPins,
+      stopDurations: s.stopDurations,
+      stopStartTimes: s.stopStartTimes,
+      hiddenCurated: s.hiddenCurated,
+    });
+    if (snap === lastSnapshot) return;
+    lastSnapshot = snap;
+    // Dynamic import breaks the (currently benign) store↔sync edge at load time.
+    import("@/lib/sync").then(({ markDirty }) => markDirty("phu-quoc-trip-v2"));
+  });
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ChecklistGroup } from "@/data/documents";
+import { markDirty } from "@/lib/sync";
 
 const KEY = "phuquoc-doc-checklist-v3";
 
@@ -50,6 +51,7 @@ export default function DocChecklist({ groups }: { groups: ChecklistGroup[] }) {
     try {
       // save FULL items array (preserves edits/deletions to both preset & custom)
       localStorage.setItem(KEY, JSON.stringify({ checked: c, items: all }));
+      markDirty(KEY);
     } catch {
       /* ignore */
     }

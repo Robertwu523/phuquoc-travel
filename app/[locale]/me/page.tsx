@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useTripStore } from "@/lib/store";
+import { useAuth } from "@/components/AuthProvider";
+import { SYNC_KEYS } from "@/lib/sync";
+import { Link } from "@/i18n/navigation";
 
 export default function ProfilePage() {
   const hydrated = useTripStore((s) => s._hasHydrated);
@@ -10,6 +13,7 @@ export default function ProfilePage() {
   const customPins = useTripStore((s) => s.customPins);
   const startDate = useTripStore((s) => s.startDate);
   const clearAll = useTripStore((s) => s.clearAll);
+  const { user, syncStatus, lastSyncAt, syncNow, signOut } = useAuth();
 
   const [confirmClear, setConfirmClear] = useState(false);
   const [flightCount, setFlightCount] = useState(0);
@@ -31,13 +35,7 @@ export default function ProfilePage() {
   function exportData() {
     const data: Record<string, unknown> = {};
     try {
-      for (const key of [
-        "phu-quoc-trip-v2",
-        "phuquoc-manual-flights",
-        "phuquoc-expenses-v1",
-        "phuquoc-doc-checklist-v3",
-        "phuquoc-wx-loc",
-      ]) {
+      for (const key of SYNC_KEYS) {
         const v = localStorage.getItem(key);
         if (v) data[key] = JSON.parse(v);
       }
@@ -52,14 +50,7 @@ export default function ProfilePage() {
   }
 
   function clearAllData() {
-    [
-      "phu-quoc-trip-v2",
-      "phuquoc-manual-flights",
-      "phuquoc-expenses-v1",
-      "phuquoc-doc-checklist-v3",
-      "phuquoc-doc-checklist-v2",
-      "phuquoc-wx-loc",
-    ].forEach((k) => localStorage.removeItem(k));
+    [...SYNC_KEYS, "phuquoc-doc-checklist-v2"].forEach((k) => localStorage.removeItem(k));
     clearAll();
     location.reload();
   }
@@ -100,6 +91,75 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* account + sync */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        {user ? (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">已登录账号</div>
+                <div className="truncate text-sm font-bold text-slate-900 dark:text-white">{user.email}</div>
+              </div>
+              <span className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white">
+                {(user.email ?? "?").charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="mt-3 flex items-center gap-2 text-xs">
+              <span className={
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium " +
+                (syncStatus === "syncing" ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                  : syncStatus === "error" ? "bg-red-100 text-red-600 dark:bg-red-950/30 dark:text-red-300"
+                  : "bg-teal-100 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300")
+              }>
+                {syncStatus === "syncing" ? "🔄 同步中…" : syncStatus === "error" ? "⚠️ 同步失败" : "☁️ 已同步"}
+              </span>
+              {lastSyncAt && (
+                <span className="text-slate-400">
+                  上次同步 {new Date(lastSyncAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => syncNow()}
+                disabled={syncStatus === "syncing"}
+                className="flex-1 rounded-lg bg-[#FF7A45] py-2 text-xs font-bold text-white transition hover:bg-[#e6662e] disabled:opacity-50"
+              >
+                {syncStatus === "syncing" ? "同步中…" : "立即同步"}
+              </button>
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                退出登录
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-100 text-xl dark:bg-teal-950/40">
+                ☁️
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-bold text-slate-900 dark:text-white">登录后跨设备同步</div>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  注册一个账号，行程、记账、清单会在所有设备间自动同步。
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/auth"
+              className="mt-3 block rounded-lg bg-[#FF7A45] py-2 text-center text-sm font-bold text-white transition hover:bg-[#e6662e]"
+            >
+              登录 / 注册
+            </Link>
+          </>
+        )}
       </div>
 
       {/* data management */}
@@ -153,7 +213,8 @@ export default function ProfilePage() {
 
       {/* about */}
       <div className="rounded-xl bg-slate-100 p-4 text-center text-xs text-slate-400 dark:bg-slate-800/60">
-        富国岛旅行助手 · 数据均存于本机浏览器（localStorage）· 不上传服务器
+        富国岛旅行助手 ·{" "}
+        {user ? "数据已同步至云端（仅你自己可见）· 登出后本机仍可离线使用" : "数据存于本机浏览器 · 登录后可跨设备同步"}
       </div>
     </div>
   );

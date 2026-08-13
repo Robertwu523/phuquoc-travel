@@ -339,7 +339,7 @@ export default function PhuQuocMap() {
                     }
                   >
                     {added
-                      ? `${t("added", { day: selectedDay + 1 })} · ${tp("remove")}`
+                      ? t("added", { day: selectedDay + 1 })
                       : `${t("addToTrip")} · ${tp("day", { n: selectedDay + 1 })}`}
                   </button>
                   <button

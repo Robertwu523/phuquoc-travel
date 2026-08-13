@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import PageHero from "@/components/PageHero";
 import { wmo, aqiLevel, uvLevel } from "@/lib/weatherCodes";
+import { markDirty } from "@/lib/sync";
 
 const WeatherMap = dynamic(() => import("@/components/WeatherMap"), {
   ssr: false,
@@ -115,6 +116,7 @@ export default function WeatherPage() {
     load(false);
     try {
       localStorage.setItem("phuquoc-wx-loc", JSON.stringify({ lat, lng }));
+      markDirty("phuquoc-wx-loc");
     } catch {}
   }, [lat, lng, load]);
 

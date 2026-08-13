@@ -52,6 +52,7 @@ export default function PoiSidebar() {
   const selectedDay = useTripStore((s) => s.selectedDay);
   const dayAssignments = useTripStore((s) => s.dayAssignments);
   const addPoiToDay = useTripStore((s) => s.addPoiToDay);
+  const removePoiFromDay = useTripStore((s) => s.removePoiFromDay);
   const removeCustomPin = useTripStore((s) => s.removeCustomPin);
   const customPins = useTripStore((s) => s.customPins);
   const hiddenCurated = useTripStore((s) => s.hiddenCurated);
@@ -307,12 +308,13 @@ export default function PoiSidebar() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => addPoiToDay(selectedDay, stop.id)}
-                        disabled={added}
+                        onClick={() =>
+                          added ? removePoiFromDay(selectedDay, stop.id) : addPoiToDay(selectedDay, stop.id)
+                        }
                         className={
                           "rounded-md px-2 py-1 text-xs font-semibold transition " +
                           (added
-                            ? "cursor-default bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300"
+                            ? "bg-teal-100 text-teal-700 hover:bg-red-50 hover:text-red-600 dark:bg-teal-900/40 dark:text-teal-300 dark:hover:bg-red-950/40"
                             : "bg-teal-600 text-white hover:bg-teal-700")
                         }
                       >
