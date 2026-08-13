@@ -335,6 +335,8 @@
 
 **构建修复（`fd16072`）**：首次推送后 Netlify 构建失败——`AuthProvider.syncNow` 误用了 `pullAll`（`lib/sync.ts` 实际导出的是 `pushAll`），`next build` 严格类型检查报错（本地 `dev` 不查类型故漏网）。已改正并在推送前跑 `npm run build` 全量验证通过。**教训**：重大改动后应本地 `npm run build` 而非只靠 `dev`，因 `dev` 不做完整类型检查。
 
+**构建修复 2（Netlify 预渲染崩溃）**：第二次推送后 Netlify 在"静态预渲染 /zh/auth、/zh/me"阶段失败——`lib/supabase/client.ts` 在模块加载时立即 `createBrowserClient`，而 Netlify 构建服务器没有 Supabase 环境变量，初始化即抛错。改为 **Proxy 懒加载**：模块加载时不创建客户端，首次真实访问（client 侧、有变量时）才创建；环境变量缺失只在运行时按需抛错，预渲染不再崩。本地用空环境变量 `npm run build` 验证通过。**另**：线上要真正连 Supabase，还需在 Netlify `Site configuration → Environment variables` 配 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY`（与 `.env.local` 同值）。
+
 ---
 
 ## 十三、当前文件结构
