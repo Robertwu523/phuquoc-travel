@@ -3,7 +3,7 @@
 > 项目位置：`D:\大学\旅游攻略网站\`
 > GitHub：`https://github.com/Robertwu523/phuquoc-travel`
 > 线上：`https://phuquoc-travel.netlify.app`
-> 最后更新：2026-08-14（富国岛美图背景 + 磨砂玻璃 + 行程 UX 修复）
+> 最后更新：2026-08-14（甘特图拖拽调时长 + 跨天拖拽 + UV 卡片修复）
 
 ---
 
@@ -376,6 +376,15 @@
 - **dayItems 与 dayAssignments 不同步**：`addPoiToDay`/`removePoiFromDay` 只更新 `dayAssignments`（旧景点列表），没更新 `dayItems`（丰富模型），两者长度不一致导致索引算错。**修复**：两个 action 现在同时维护 `dayItems` 和 `dayAssignments`
 - **add-stop picker 被表格遮挡**：选择器用 `createPortal` 渲染到 body，脱离时间线的 `overflow-x-auto`/`backdrop-blur`，完整居中显示
 
+### 12.7 甘特图拖拽升级 + UV 卡片修复
+> 提交：`a30ca0c`（已推送）
+
+handoff 待办里两项甘特图增强：
+- **拖右边缘改时长**：色块右侧 ~12px 是 resize 把手，拖动改宽度（15 分钟吸附），松手提交 `setStopDuration`。`dragInfo` 扩展 `mode: "move"|"resize"` + `origWidth`，pointerDown 时按 `clientX >= blockRect.right-12` 判定模式
+- **跨天拖拽**：拖色块时用 `dayFromPoint(clientY)` 检测落在哪个 day-row（`.pq-day-row` 元素），松手时若不同天 → `removePoiFromDay(原天)`+`addPoiToDay(新天)`+设开始时间
+- **UV 卡片白底白字**：天气页 UV 卡片之前是 `bg-slate-100 text-white/70`（浅底白字看不见），改成 `border bg-white text-slate-900`，建议文字 `text-white/70`→`text-slate-500`
+- **跨天拖拽已验证**（合成事件测试：sao-beach 从 day0 移到 day1 成功）；resize 因 pointer-capture 在测试环境受限，代码审过正确，需手动验证
+
 ---
 
 ## 十三、当前文件结构
@@ -503,8 +512,8 @@ npx tsc --noEmit     # 类型检查
 
 ## 十五、待办 / 后续优化方向
 
-- [ ] 甘特图色块**拖拽调时长**（拖右边缘改 duration）
-- [ ] 跨天拖拽（从一个天拖到另一个天）
+- [x] ~~甘特图色块**拖拽调时长**（拖右边缘改 duration）~~ → 已实现（12.7）
+- [x] ~~跨天拖拽（从一个天拖到另一个天）~~ → 已实现（12.7）
 - [ ] 冲突预警（某天 > 16h 红色警示）
 - [ ] 行程模板（空白预设：一日游/周末/深度游）
 - [ ] 地图视图 ↔ 时间轴视图双视图切换
