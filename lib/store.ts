@@ -116,17 +116,32 @@ export const useTripStore = create<TripState>()(
         set((s) => {
           const list = s.dayAssignments[day] ?? [];
           if (list.includes(poiId)) return {};
+          const item: TripItem = {
+            id: `item-${poiId}-${Date.now()}`,
+            type: "activity",
+            title: poiId,
+            poiId,
+          };
+          const dayItems = { ...s.dayItems, [day]: [...(s.dayItems[day] ?? []), item] };
           return {
             dayAssignments: { ...s.dayAssignments, [day]: [...list, poiId] },
+            dayItems,
           };
         }),
       removePoiFromDay: (day, poiId) =>
-        set((s) => ({
-          dayAssignments: {
-            ...s.dayAssignments,
-            [day]: (s.dayAssignments[day] ?? []).filter((id) => id !== poiId),
-          },
-        })),
+        set((s) => {
+          const dayItems = {
+            ...s.dayItems,
+            [day]: (s.dayItems[day] ?? []).filter((it) => it.poiId !== poiId),
+          };
+          return {
+            dayAssignments: {
+              ...s.dayAssignments,
+              [day]: (s.dayAssignments[day] ?? []).filter((id) => id !== poiId),
+            },
+            dayItems,
+          };
+        }),
       movePoi: (day, index, dir) =>
         set((s) => {
           const list = s.dayAssignments[day] ?? [];

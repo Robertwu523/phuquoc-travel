@@ -390,11 +390,12 @@ export default function Page() {
                     document.body
                   )}
 
-                  {/* add-stop picker */}
-                  {addSlot && (
+                  {/* add-stop picker — portaled to <body> so it can't be trapped
+                      by the timeline's overflow/blur container. */}
+                  {addSlot && createPortal(
                     <div className="fixed inset-0 z-[2000] flex items-start justify-center bg-black/20 pt-32"
                       onClick={() => setAddSlot(null)}>
-                      <div className="max-h-[360px] w-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+                      <div className="max-h-[60vh] w-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
                         onClick={(e) => e.stopPropagation()}>
                         <div className="mb-2 text-sm font-bold text-slate-900 dark:text-white">
                           📍 添加景点到第 {addSlot.day + 1} 天 · {minToLabel(addSlot.timeMin)}
@@ -405,7 +406,12 @@ export default function Page() {
                         <div className="space-y-0.5">
                           {pickableStops(customPins, locale, addQuery).map((s) => (
                             <button key={s.id} type="button"
-                              onClick={() => { addPoiToDay(addSlot.day, s.id); setAddSlot(null); }}
+                              onClick={() => {
+                                const idx = (useTripStore.getState().dayAssignments[addSlot.day]?.length) ?? 0;
+                                addPoiToDay(addSlot.day, s.id);
+                                setStopStartTime(addSlot.day, idx, addSlot.timeMin);
+                                setAddSlot(null);
+                              }}
                               className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition hover:bg-[#FF7A45]/10 dark:hover:bg-slate-800">
                               <span>{s.emoji}</span>
                               <span className="flex-1 truncate font-medium text-slate-800 dark:text-slate-200">{s.name}</span>
@@ -435,7 +441,8 @@ export default function Page() {
                           />
                         </div>
                       </div>
-                    </div>
+                    </div>,
+                    document.body
                   )}
                 </div>
               )}

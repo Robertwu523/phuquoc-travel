@@ -35,6 +35,18 @@ export default async function Page() {
             <FSButton href="/trip">{t("startPlanning")}</FSButton>
           </div>
         </div>
+
+        {/* scroll-down indicator */}
+        <a
+          href="#expeditions"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/70 transition hover:text-white"
+          aria-label="向下滚动"
+        >
+          <span className="text-[10px] font-medium uppercase tracking-[0.2em]">向下探索</span>
+          <span className="flex h-9 w-5 items-start justify-center rounded-full border-2 border-white/50 p-1">
+            <span className="pq-scroll-cue h-1.5 w-1.5 rounded-full bg-white/80" />
+          </span>
+        </a>
       </section>
 
       {/* ===== Marquee ===== */}

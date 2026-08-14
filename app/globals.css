@@ -149,6 +149,14 @@ body {
 .wx-cloud { animation: wx-float 5s ease-in-out infinite; display: inline-block; }
 .wx-pulse { animation: wx-pulse 3s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .wx-float, .wx-float-slow, .wx-sun, .wx-cloud, .wx-pulse, .marquee-track { animation: none; }
+  .wx-float, .wx-float-slow, .wx-sun, .wx-cloud, .wx-pulse, .marquee-track, .pq-scroll-cue { animation: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ---- Home hero scroll cue ---- */
+@keyframes pq-cue {
+  0% { transform: translateY(0); opacity: 0.9; }
+  60% { transform: translateY(8px); opacity: 0.25; }
+  100% { transform: translateY(0); opacity: 0.9; }
+}
+.pq-scroll-cue { animation: pq-cue 1.8s ease-in-out infinite; }
