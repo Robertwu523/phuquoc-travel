@@ -303,7 +303,7 @@ export default function PhuQuocMap() {
           attribution={
             layer === "satellite"
               ? "&copy; Esri, Maxar, Earthstar Geographics"
-              : "&copy; OpenStreetMap contributors"
+              : "&copy; OpenStreetMap contributors &copy; CARTO"
           }
           url={
             layer === "satellite"
@@ -321,8 +321,8 @@ export default function PhuQuocMap() {
             <Marker key={stop.id} position={[stop.lat, stop.lng]} icon={makeIcon(stop, added)}>
               <Popup>
                 <div className="min-w-[190px]">
-                  <div className="text-sm font-bold text-slate-900">{stop.name}</div>
-                  <div className="mt-0.5 text-xs font-medium text-teal-700">
+                  <div className="text-sm font-bold text-slate-900 dark:text-white">{stop.name}</div>
+                  <div className="mt-0.5 text-xs font-medium text-teal-700 dark:text-teal-400">
                     {stop.emoji} {t("durationHours", { hours: stop.duration })}
                   </div>
                   <ReviewButtons name={stop.name} locale={locale} />
@@ -368,7 +368,7 @@ export default function PhuQuocMap() {
                   <input
                     value={pin?.name ?? ""}
                     onChange={(e) => updateCustomPin(stop.id, { name: e.target.value })}
-                    className="w-full rounded border border-slate-300 px-1.5 py-1 text-sm font-semibold text-slate-900 focus:border-teal-500 focus:outline-none"
+                    className="w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-sm font-semibold text-slate-900 focus:border-teal-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                   />
                   {pin && (
                     <div className="mt-2">
@@ -386,7 +386,7 @@ export default function PhuQuocMap() {
                             category: e.target.value === "__custom__" ? "" : e.target.value,
                           })
                         }
-                        className="mt-0.5 w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                        className="mt-0.5 w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 focus:border-teal-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                       >
                         {KNOWN_CATS.map((c) => (
                           <option key={c} value={c}>
@@ -400,7 +400,7 @@ export default function PhuQuocMap() {
                           value={pin.category}
                           onChange={(e) => updateCustomPin(stop.id, { category: e.target.value })}
                           placeholder="输入分类"
-                          className="mt-1 w-full rounded border border-slate-300 px-1.5 py-1 text-xs text-slate-900 focus:border-teal-500 focus:outline-none"
+                          className="mt-1 w-full rounded border border-slate-300 bg-white px-1.5 py-1 text-xs text-slate-900 focus:border-teal-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                         />
                       )}
                     </div>

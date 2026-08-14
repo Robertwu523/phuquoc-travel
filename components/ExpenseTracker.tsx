@@ -149,14 +149,14 @@ export default function ExpenseTracker({ days }: { days: number }) {
   return (
     <div className="space-y-4">
       {/* budget + summary */}
-      <div className="rounded-2xl bg-gradient-to-br from-[#FFB088] to-[#FF7A45] p-5 text-white shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">
               旅行预算
             </div>
-            <div className="mt-1 text-3xl font-extrabold">{fmtCNY(totalCNY)}</div>
-            <div className="text-sm text-white/85">
+            <div className="mt-1 text-3xl font-extrabold text-[#FF7A45]">{fmtCNY(totalCNY)}</div>
+            <div className="text-sm text-slate-500 dark:text-slate-400">
               {budget > 0
                 ? overBudget
                   ? `超支 ${fmtCNY(Math.abs(remaining))}`
@@ -165,28 +165,28 @@ export default function ExpenseTracker({ days }: { days: number }) {
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <label className="flex items-center gap-1 text-xs text-white/80">
+            <label className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
               预算 ¥
               <input
                 type="number"
                 value={budget || ""}
                 onChange={(e) => saveBudget(Number(e.target.value) || 0)}
                 placeholder="5000"
-                className="w-20 rounded-md border border-white/40 bg-white/15 px-2 py-1 text-right text-sm text-white placeholder:text-white/50 focus:outline-none [color-scheme:light]"
+                className="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-right text-sm text-slate-700 placeholder:text-slate-400 focus:border-[#FF7A45] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
               />
             </label>
           </div>
         </div>
         {budget > 0 && (
-          <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white/20">
+          <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div
-              className={"h-full rounded-full transition-all " + (overBudget ? "bg-red-300" : "bg-white")}
+              className={"h-full rounded-full transition-all " + (overBudget ? "bg-red-400" : "bg-[#FF7A45]")}
               style={{ width: `${pct}%` }}
             />
           </div>
         )}
         {ratesTime && (
-          <div className="mt-2 text-[10px] text-white/60">
+          <div className="mt-2 text-[10px] text-slate-400">
             汇率更新于 {new Date(ratesTime).toLocaleDateString("zh-CN")} · 1 HKD = {(rates?.VND ?? 0).toFixed(0)} VND
           </div>
         )}

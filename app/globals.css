@@ -1,86 +1,154 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --color-card: #ffffff;
+  --color-border: #e5e7eb;
+  --color-accent: #00a7fa;
+  --color-muted: #6b7280;
+  --color-subtle: #9ca3af;
+  --font-headline: var(--font-headline);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  color: #171717;
+  font-family: var(--font-body), Arial, sans-serif;
+  font-feature-settings: "rlig" 1, "calt" 1;
+  overflow-x: hidden;
 }
 
-/* ---- Leaflet custom markers ---- */
-.pq-marker {
-  background: transparent;
-  border: none;
+/* default border color site-wide */
+* {
+  border-color: #e5e7eb;
 }
-.pq-pin {
-  width: 34px;
-  height: 34px;
+
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: #f3f4f6; }
+::-webkit-scrollbar-thumb { background: #00a7fa; }
+
+/* ---- Font helpers ---- */
+.font-headline { font-family: var(--font-headline), sans-serif; }
+.font-mono-ui { font-family: var(--font-mono), monospace; }
+
+/* ---- Transitions ---- */
+.sharp-transition { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* stroked outline headline word */
+.hero-outline {
+  -webkit-text-stroke: 1.5px #000;
+  color: transparent;
+}
+
+/* ---- Marquee ---- */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.marquee-track {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
-  line-height: 1;
-  background: var(--pin-color, #0d9488);
+  white-space: nowrap;
+  animation: marquee 40s linear infinite;
+}
+
+/* ---- Diced Hero warped-corner masks ---- */
+.warped-image {
+  --r: 20px;
+  --s: 40px;
+  --x: 25px;
+  --y: 5px;
+  mask-repeat: no-repeat;
+}
+.top-right {
+  --_m:/calc(2*var(--r)) calc(2*var(--r)) radial-gradient(#000 70%,#0000 72%);
+  --_g:conic-gradient(at calc(100% - var(--r)) var(--r),#0000 25%,#000 0);
+  --_d:(var(--s) + var(--r));
+  mask:
+    calc(100% - var(--_d) - var(--x)) 0 var(--_m),
+    100% calc(var(--_d) + var(--y)) var(--_m),
+    radial-gradient(var(--s) at 100% 0,#0000 99%,#000 calc(100% + 1px))
+     calc(-1*var(--r) - var(--x)) calc(var(--r) + var(--y)),
+    var(--_g) calc(-1*var(--_d) - var(--x)) 0,
+    var(--_g) 0 calc(var(--_d) + var(--y));
+  mask-repeat: no-repeat;
+}
+.top-left {
+  --_m:/calc(2*var(--r)) calc(2*var(--r)) radial-gradient(#000 70%,#0000 72%);
+  --_g:conic-gradient(at var(--r) var(--r),#000 75%,#0000 0);
+  --_d:(var(--s) + var(--r));
+  mask:
+    calc(var(--_d) + var(--x)) 0 var(--_m),
+    0 calc(var(--_d) + var(--y)) var(--_m),
+    radial-gradient(var(--s) at 0 0,#0000 99%,#000 calc(100% + 1px))
+     calc(var(--r) + var(--x)) calc(var(--r) + var(--y)),
+    var(--_g) calc(var(--_d) + var(--x)) 0,
+    var(--_g) 0 calc(var(--_d) + var(--y));
+  mask-repeat: no-repeat;
+}
+.bottom-left {
+  --_m:/calc(2*var(--r)) calc(2*var(--r)) radial-gradient(#000 70%,#0000 72%);
+  --_g:conic-gradient(from 180deg at var(--r) calc(100% - var(--r)),#0000 25%,#000 0);
+  --_d:(var(--s) + var(--r));
+  mask:
+    calc(var(--_d) + var(--x)) 100% var(--_m),
+    0 calc(100% - var(--_d) - var(--y)) var(--_m),
+    radial-gradient(var(--s) at 0 100%,#0000 99%,#000 calc(100% + 1px))
+     calc(var(--r) + var(--x)) calc(-1*var(--r) - var(--y)),
+    var(--_g) calc(var(--_d) + var(--x)) 0,
+    var(--_g) 0 calc(-1*var(--_d) - var(--y));
+  mask-repeat: no-repeat;
+}
+.bottom-right {
+  --_m:/calc(2*var(--r)) calc(2*var(--r)) radial-gradient(#000 70%,#0000 72%);
+  --_g:conic-gradient(from 90deg at calc(100% - var(--r)) calc(100% - var(--r)),#0000 25%,#000 0);
+  --_d:(var(--s) + var(--r));
+  mask:
+    calc(100% - var(--_d) - var(--x)) 100% var(--_m),
+    100% calc(100% - var(--_d) - var(--y)) var(--_m),
+    radial-gradient(var(--s) at 100% 100%,#0000 99%,#000 calc(100% + 1px))
+     calc(-1*var(--r) - var(--x)) calc(-1*var(--r) - var(--y)),
+    var(--_g) calc(-1*var(--_d) - var(--x)) 0,
+    var(--_g) 0 calc(-1*var(--_d) - var(--y));
+  mask-repeat: no-repeat;
+}
+
+/* ---- Leaflet (dark) ---- */
+.pq-marker { background: transparent; border: none; }
+.pq-pin {
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; line-height: 1;
+  background: var(--pin-color, #00a7fa);
   border-radius: 50%;
   border: 2px solid #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   transition: transform 0.15s ease;
 }
-.pq-pin--added {
-  box-shadow: 0 0 0 3px #14b8a6, 0 2px 8px rgba(0, 0, 0, 0.35);
-}
-.pq-marker:hover .pq-pin {
-  transform: scale(1.12);
-}
+.pq-pin--added { box-shadow: 0 0 0 3px #00a7fa, 0 2px 8px rgba(0, 0, 0, 0.35); }
+.pq-marker:hover .pq-pin { transform: scale(1.12); }
+.leaflet-popup-content-wrapper { border-radius: 12px; background: #ffffff; color: #171717; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.leaflet-popup-tip { background: #ffffff; }
+.leaflet-popup-content { margin: 10px 12px; }
+.leaflet-container { background: #e5e7eb; }
 
-/* Leaflet popup tweaks */
-.leaflet-popup-content-wrapper {
-  border-radius: 12px;
-}
-.leaflet-popup-content {
-  margin: 10px 12px;
-}
-
-/* ---- Weather animations ---- */
-@keyframes wx-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-@keyframes wx-float-slow {
-  0%, 100% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-12px) translateX(6px); }
-}
-@keyframes wx-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-@keyframes wx-pulse {
-  0%, 100% { opacity: 0.85; }
-  50% { opacity: 1; }
-}
+/* ---- Weather animations (kept) ---- */
+@keyframes wx-float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes wx-float-slow { 0%,100%{transform:translateY(0) translateX(0)} 50%{transform:translateY(-12px) translateX(6px)} }
+@keyframes wx-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes wx-pulse { 0%,100%{opacity:0.85} 50%{opacity:1} }
 .wx-float { animation: wx-float 4s ease-in-out infinite; }
 .wx-float-slow { animation: wx-float-slow 6s ease-in-out infinite; }
 .wx-sun { animation: wx-spin 28s linear infinite; display: inline-block; }
 .wx-cloud { animation: wx-float 5s ease-in-out infinite; display: inline-block; }
 .wx-pulse { animation: wx-pulse 3s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .wx-float, .wx-float-slow, .wx-sun, .wx-cloud, .wx-pulse { animation: none; }
+  .wx-float, .wx-float-slow, .wx-sun, .wx-cloud, .wx-pulse, .marquee-track { animation: none; }
+  html { scroll-behavior: auto; }
 }

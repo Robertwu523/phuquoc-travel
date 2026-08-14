@@ -18,6 +18,8 @@ export type POI = {
   lng: number;
   /** suggested visit duration in hours */
   duration: number;
+  /** optional photo URL (direct image link) shown on cards/banners */
+  image?: string;
 };
 
 // Coordinates: most are from open mapping sources / travel references. Some are
@@ -27,6 +29,7 @@ export type POI = {
 export const pois: POI[] = [
   {
     id: "sao-beach",
+    image: "/images/pois/sao-beach.jpg",
     category: "beach",
     name: { zh: "星星沙滩", en: "Sao Beach" },
     description: {
@@ -39,6 +42,7 @@ export const pois: POI[] = [
   },
   {
     id: "kem-beach",
+    image: "/images/pois/kem-beach.jpg",
     category: "beach",
     name: { zh: "Kem 沙滩", en: "Kem Beach" },
     description: {
@@ -51,6 +55,7 @@ export const pois: POI[] = [
   },
   {
     id: "rach-vem",
+    image: "/images/pois/rach-vem.jpg",
     category: "beach",
     name: { zh: "海星沙滩 (Rach Vem)", en: "Rach Vem Starfish Beach" },
     description: {
@@ -63,6 +68,7 @@ export const pois: POI[] = [
   },
   {
     id: "vinwonders",
+    image: "/images/pois/vinwonders.jpg",
     category: "family",
     name: { zh: "珍珠游乐园 VinWonders", en: "VinWonders Phu Quoc" },
     description: {
@@ -75,6 +81,7 @@ export const pois: POI[] = [
   },
   {
     id: "hon-thom-cable-car",
+    image: "/images/pois/hon-thom-cable-car.jpg",
     category: "family",
     name: { zh: "香岛跨海缆车", en: "Hon Thom Cable Car" },
     description: {
@@ -87,6 +94,7 @@ export const pois: POI[] = [
   },
   {
     id: "phu-quoc-national-park",
+    image: "/images/pois/phu-quoc-national-park.jpg",
     category: "nature",
     name: { zh: "富国岛国家公园", en: "Phu Quoc National Park" },
     description: {
@@ -99,6 +107,7 @@ export const pois: POI[] = [
   },
   {
     id: "suoi-tranh-waterfall",
+    image: "/images/pois/suoi-tranh-waterfall.jpg",
     category: "nature",
     name: { zh: "Suoi Tranh 瀑布", en: "Suoi Tranh Waterfall" },
     description: {
@@ -111,6 +120,7 @@ export const pois: POI[] = [
   },
   {
     id: "an-thoi-archipelago",
+    image: "/images/pois/an-thoi-archipelago.jpg",
     category: "island",
     name: { zh: "安泰群岛", en: "An Thoi Archipelago" },
     description: {
@@ -123,6 +133,7 @@ export const pois: POI[] = [
   },
   {
     id: "may-rut-island",
+    image: "/images/pois/may-rut-island.jpg",
     category: "island",
     name: { zh: "May Rut 岛", en: "May Rut Island" },
     description: {
@@ -135,6 +146,7 @@ export const pois: POI[] = [
   },
   {
     id: "duong-dong-night-market",
+    image: "/images/pois/duong-dong-night-market.jpg",
     category: "market",
     name: { zh: "阳东夜市", en: "Duong Dong Night Market" },
     description: {
@@ -147,6 +159,7 @@ export const pois: POI[] = [
   },
   {
     id: "dinh-cau-temple",
+    image: "/images/pois/dinh-cau-temple.jpg",
     category: "temple",
     name: { zh: "Dinh Cậu 庙", en: "Dinh Cau Temple" },
     description: {
@@ -159,6 +172,7 @@ export const pois: POI[] = [
   },
   {
     id: "coconut-prison",
+    image: "/images/pois/coconut-prison.jpg",
     category: "culture",
     name: { zh: "富国岛监狱旧址", en: "Coconut Prison (Phu Quoc Prison)" },
     description: {
@@ -171,6 +185,7 @@ export const pois: POI[] = [
   },
   {
     id: "fish-sauce-factory",
+    image: "/images/pois/fish-sauce-factory.jpg",
     category: "culture",
     name: { zh: "鱼露工厂", en: "Fish Sauce Factory" },
     description: {
@@ -183,6 +198,7 @@ export const pois: POI[] = [
   },
   {
     id: "pepper-farm",
+    image: "/images/pois/pepper-farm.jpg",
     category: "culture",
     name: { zh: "胡椒园", en: "Pepper Farm" },
     description: {

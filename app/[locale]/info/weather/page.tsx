@@ -310,7 +310,7 @@ function TrendCard({ data }: { data: Data }) {
               </defs>
               <XAxis
                 dataKey="time"
-                tick={{ fontSize: 11, fill: "#94a3b8" }}
+                tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
                 axisLine={false}
                 tickLine={false}
               />
@@ -319,11 +319,11 @@ function TrendCard({ data }: { data: Data }) {
                 contentStyle={{
                   border: "none",
                   borderRadius: 12,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
                   fontSize: 13,
                   padding: "8px 12px",
                 }}
-                labelStyle={{ color: "#94a3b8", fontSize: 11 }}
+                labelStyle={{ color: "var(--chart-axis)", fontSize: 11 }}
                 formatter={(v) => [`${Math.round(Number(v))}°C`, "气温"]}
               />
               <Area
@@ -332,8 +332,8 @@ function TrendCard({ data }: { data: Data }) {
                 stroke="var(--chart-color, #FF7A45)"
                 strokeWidth={2.5}
                 fill="url(#tempGrad)"
-                dot={{ fill: "#fff", stroke: "var(--chart-color, #FF7A45)", strokeWidth: 2, r: 3.5 }}
-                activeDot={{ r: 5, stroke: "var(--chart-color, #FF7A45)", strokeWidth: 2, fill: "#fff" }}
+                dot={{ fill: "var(--chart-dot)", stroke: "var(--chart-color, #FF7A45)", strokeWidth: 2, r: 3.5 }}
+                activeDot={{ r: 5, stroke: "var(--chart-color, #FF7A45)", strokeWidth: 2, fill: "var(--chart-dot)" }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -406,9 +406,9 @@ function SunCycleCard({ data }: { data: Data }) {
       <h3 className="text-lg font-bold text-slate-900 dark:text-white">日出 · 日落</h3>
       <svg viewBox="0 0 260 80" className="mt-3 w-full">
         {/* horizon line */}
-        <line x1="10" y1="70" x2="250" y2="70" stroke="#E2E8F0" strokeWidth="2" />
+        <line x1="10" y1="70" x2="250" y2="70" stroke="var(--horizon-stroke)" strokeWidth="2" />
         {/* full dashed arc */}
-        <path d="M 10 70 Q 130 -20, 250 70" fill="none" stroke="#E2E8F0" strokeWidth="2" strokeDasharray="4 4" />
+        <path d="M 10 70 Q 130 -20, 250 70" fill="none" stroke="var(--horizon-stroke)" strokeWidth="2" strokeDasharray="4 4" />
         {/* filled arc up to current sun position */}
         <path d={`M 10 70 Q ${cx.toFixed(2)} ${cy.toFixed(2)}, ${sun.x.toFixed(2)} ${sun.y.toFixed(2)}`} fill="none" stroke="#FF7A45" strokeWidth="2.5" strokeLinecap="round" />
         {/* sun glow + core */}
@@ -428,10 +428,10 @@ function SunCycleCard({ data }: { data: Data }) {
           <div className="font-bold text-slate-900 dark:text-white">{hh(set)}</div>
         </div>
       </div>
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-900 p-4 text-white">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-xl">☀️</div>
+      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-100 p-4 dark:border dark:border-slate-700 dark:bg-slate-800/60">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF7A45]/15 text-xl">☀️</div>
         <div className="flex-1">
-          <div className="text-lg font-bold">
+          <div className="text-lg font-bold text-slate-900 dark:text-white">
             UV {uv.toFixed(0)}{" "}
             <span className="ml-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: uvl.color, color: "#1a1a1a" }}>
               {uvl.label}

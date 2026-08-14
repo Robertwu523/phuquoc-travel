@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
@@ -8,14 +8,20 @@ import { routing } from "@/i18n/routing";
 import SiteHeader from "@/components/SiteHeader";
 import { AuthProvider } from "@/components/AuthProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fontHeadline = Space_Grotesk({
+  variable: "--font-headline",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fontBody = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+});
+const fontMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
 });
 
 export function generateStaticParams() {
@@ -53,13 +59,13 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${fontHeadline.variable} ${fontBody.variable} ${fontMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <body className="min-h-full flex flex-col bg-white text-[#171717] font-body">
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <SiteHeader />
-            <main className="flex-1 pt-24 md:pt-16">{children}</main>
+            <main className="flex-1 pt-16">{children}</main>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

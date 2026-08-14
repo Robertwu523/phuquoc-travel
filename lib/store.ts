@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { CustomPin } from "@/lib/stops";
+import type { CustomPin, TripItem } from "@/lib/stops";
 
 type TripState = {
   /** ISO yyyy-mm-dd, the departure date from Hong Kong */
@@ -13,6 +13,9 @@ type TripState = {
   selectedDay: number;
   /** dayIndex -> ordered stop ids (curated POI ids OR custom pin ids) */
   dayAssignments: Record<number, string[]>;
+  /** dayIndex -> ordered timeline items (activity/transport/hotel/food/note). The
+   *  richer model; dayAssignments is kept in sync for map/catalog/roadmap use. */
+  dayItems: Record<number, TripItem[]>;
   /** registry of user-dropped custom pins, keyed by id */
   customPins: Record<string, CustomPin>;
   /** per-stop custom duration overrides: key = `${day}-${idx}` → hours */
@@ -61,9 +64,28 @@ type TripState = {
 
   setHasHydrated: (b: boolean) => void;
   setFlyTo: (f: { lat: number; lng: number; zoom: number } | null) => void;
+
+  /** add an arbitrary timeline item (transport/hotel/food/note/activity) to a day */
+  addDayItem: (day: number, item: TripItem) => void;
+  /** remove a timeline item by id (and from dayAssignments if it was a POI link) */
+  removeDayItem: (day: number, itemId: string) => void;
+  /** patch a timeline item by id */
+  updateDayItem: (day: number, itemId: string, patch: Partial<TripItem>) => void;
 };
 
 const clampDays = (n: number) => Math.max(1, Math.min(30, Math.round(n)));
+
+/** Derive the legacy dayAssignments (POI ids) from dayItems so the map/catalog
+ *  stay in sync with the richer timeline model. Activity items with a poiId count. */
+function deriveAssignments(dayItems: Record<number, TripItem[]>): Record<number, string[]> {
+  const out: Record<number, string[]> = {};
+  for (const [k, items] of Object.entries(dayItems)) {
+    out[Number(k)] = items
+      .filter((it) => it.type === "activity" && it.poiId)
+      .map((it) => it.poiId!) as string[];
+  }
+  return out;
+}
 
 export const useTripStore = create<TripState>()(
   persist(
@@ -72,6 +94,7 @@ export const useTripStore = create<TripState>()(
       days: 5,
       selectedDay: 0,
       dayAssignments: {},
+      dayItems: {},
       customPins: {},
       stopDurations: {},
       stopStartTimes: {},
@@ -184,6 +207,27 @@ export const useTripStore = create<TripState>()(
         set({
           flyTo: f ? { ...f, nonce: Date.now() } : null,
         }),
+
+      addDayItem: (day, item) =>
+        set((s) => {
+          const list = [...(s.dayItems[day] ?? []), item];
+          const dayItems = { ...s.dayItems, [day]: list };
+          return { dayItems, dayAssignments: deriveAssignments(dayItems) };
+        }),
+      removeDayItem: (day, itemId) =>
+        set((s) => {
+          const list = (s.dayItems[day] ?? []).filter((it) => it.id !== itemId);
+          const dayItems = { ...s.dayItems, [day]: list };
+          return { dayItems, dayAssignments: deriveAssignments(dayItems) };
+        }),
+      updateDayItem: (day, itemId, patch) =>
+        set((s) => {
+          const list = (s.dayItems[day] ?? []).map((it) =>
+            it.id === itemId ? { ...it, ...patch } : it
+          );
+          const dayItems = { ...s.dayItems, [day]: list };
+          return { dayItems, dayAssignments: deriveAssignments(dayItems) };
+        }),
     }),
     {
       name: "phu-quoc-trip-v2",
@@ -193,12 +237,35 @@ export const useTripStore = create<TripState>()(
         days: s.days,
         selectedDay: s.selectedDay,
         dayAssignments: s.dayAssignments,
+        dayItems: s.dayItems,
         customPins: s.customPins,
         stopDurations: s.stopDurations,
         stopStartTimes: s.stopStartTimes,
         hiddenCurated: s.hiddenCurated,
       }),
-      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        // One-time backward-compat migration: users on the old model only had
+        // dayAssignments (POI ids). Seed dayItems with activity items so their
+        // existing plan shows up in the richer timeline. Idempotent — if dayItems
+        // already has content, leave it alone.
+        const hasItems = Object.values(state.dayItems ?? {}).some(
+          (list) => Array.isArray(list) && list.length > 0
+        );
+        if (!hasItems) {
+          const dayItems: Record<number, TripItem[]> = {};
+          for (const [k, ids] of Object.entries(state.dayAssignments ?? {})) {
+            dayItems[Number(k)] = (ids as string[]).map((id) => ({
+              id: `migrated-${id}`,
+              type: "activity" as const,
+              title: id,
+              poiId: id,
+            }));
+          }
+          state.dayItems = dayItems;
+        }
+        state.setHasHydrated(true);
+      },
     }
   )
 );

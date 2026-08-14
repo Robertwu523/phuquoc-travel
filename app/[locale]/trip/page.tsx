@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import { useTripStore, selectTotalPois } from "@/lib/store";
 import { resolveStop, type MapStop, type Locale } from "@/lib/stops";
@@ -25,13 +26,16 @@ const HOUR_LABELS = Array.from({ length: HOURS + 1 }, (_, i) => {
 type Tab = "timeline" | "expenses";
 
 function computeSchedule(stops: MapStop[], durArr: number[], startArr: number[]) {
-  let autoT = 9 * 60; // fallback auto-start at 09:00
+  // Each stop is placed independently: explicit start time if set, otherwise a
+  // default 09:00. We do NOT cascade auto-starts off the previous stop's end —
+  // that made dragging one stop shove all the un-pinned ones after it. Users
+  // who want them spaced out can drag each into place (which pins its time).
+  const DEFAULT_START = 9 * 60; // 09:00
   return stops.map((stop, i) => {
-    const start = startArr[i] >= 0 ? startArr[i] : autoT;
+    const start = startArr[i] >= 0 ? startArr[i] : DEFAULT_START;
     const useHours = durArr[i] > 0 ? durArr[i] : stop.duration;
     const dur = Math.max(15, useHours * 60);
     const end = start + dur;
-    autoT = end + TRAVEL_MIN;
     return { stop, startMin: start, endMin: end };
   });
 }
@@ -119,7 +123,13 @@ export default function Page() {
   ];
 
   return (
-    <div className="pt-24 md:pt-16">
+    <div className="relative pt-24 md:pt-16">
+      {/* paradise beach photo — only on this page, fixed behind content */}
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/phuquoc-paradise.jpg)" }}
+      />
+      <div className="fixed inset-0 -z-10 bg-white/45" />
       {!hydrated ? (
         <div className="mx-auto max-w-7xl px-4 py-20">
           <div className="h-40 animate-pulse rounded-2xl bg-slate-200/70 dark:bg-slate-800/60" />
@@ -127,34 +137,34 @@ export default function Page() {
       ) : (
         <div className="mx-auto max-w-7xl px-3 py-4">
           {/* summary bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-[#FFB088] to-[#FF7A45] px-5 py-3 text-white">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/50 bg-white/75 px-5 py-3 shadow-sm backdrop-blur-md">
             <div className="flex items-baseline gap-3">
-              <h1 className="text-lg font-extrabold">📋 富国岛行程</h1>
-              <span className="text-sm text-white/85">{rangeStr} · {days}天 · {total}个景点</span>
+              <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">📋 富国岛行程</h1>
+              <span className="text-base text-slate-500 dark:text-slate-400">{rangeStr} · {days}天 · <span className="font-semibold text-[#FF7A45]">{total}</span>个景点</span>
             </div>
             <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1 text-xs text-white/80">
+              <label className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
                 出发
                 <input type="date" value={startDate ?? ""} onChange={(e) => setStartDate(e.target.value || null)}
-                  className="rounded border border-white/40 bg-white/15 px-2 py-1 text-xs text-white focus:outline-none [color-scheme:light]" />
+                  className="rounded border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700 focus:outline-none focus:border-[#FF7A45] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 [color-scheme:light] dark:[color-scheme:dark]" />
               </label>
-              <label className="flex items-center gap-1 text-xs text-white/80">
+              <label className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
                 天数
                 <input type="number" min={1} max={30} value={days} onChange={(e) => setDays(Number(e.target.value))}
-                  className="w-14 rounded border border-white/40 bg-white/15 px-1 py-1 text-xs text-white focus:outline-none" />
+                  className="w-16 rounded border border-slate-300 bg-white px-1 py-1 text-sm text-slate-700 focus:outline-none focus:border-[#FF7A45] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" />
               </label>
               <button type="button" onClick={clearAll}
-                className="rounded border border-white/50 px-2 py-1 text-xs font-semibold transition hover:bg-white/15">
+                className="rounded border border-slate-300 px-2 py-1 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
                 {tp("clearAll")}
               </button>
             </div>
           </div>
 
           {/* tabs */}
-          <div className="mt-3 flex gap-1 rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-800 dark:bg-slate-900">
+          <div className="mt-3 flex gap-1 rounded-xl border border-white/50 bg-white/75 p-1 shadow-sm backdrop-blur-md">
             {TABS.map((tb) => (
               <button key={tb.key} type="button" onClick={() => setTab(tb.key)}
-                className={"flex-1 rounded-lg py-2 text-sm font-semibold transition " +
+                className={"flex-1 rounded-lg py-2.5 text-base font-semibold transition " +
                   (tab === tb.key ? "bg-[#FF7A45] text-white shadow-sm" : "text-slate-500 hover:text-slate-700 dark:text-slate-400")}>
                 {tb.emoji} {tb.label}
               </button>
@@ -174,16 +184,16 @@ export default function Page() {
                   </div>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div className="overflow-x-auto rounded-2xl border border-white/50 bg-white/75 shadow-sm backdrop-blur-md">
                   {/* hour header */}
-                  <div className="flex border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50">
-                    <div className="w-[100px] shrink-0 border-r border-slate-200 px-2 py-1.5 text-[10px] font-bold uppercase text-slate-400 dark:border-slate-700">
+                  <div className="flex border-b border-slate-200/70 bg-white/40">
+                    <div className="w-[110px] shrink-0 border-r border-slate-200 px-2 py-1.5 text-xs font-bold uppercase text-slate-400 dark:border-slate-700">
                       日期
                     </div>
                     <div className="relative" style={{ width: TIMELINE_WIDTH, minWidth: TIMELINE_WIDTH }}>
                       <div className="flex">
                         {HOUR_LABELS.map((label, i) => (
-                          <div key={i} className="text-[9px] text-slate-400" style={{ width: PX_PER_HOUR }}>
+                          <div key={i} className="text-[11px] text-slate-400" style={{ width: PX_PER_HOUR }}>
                             {label}
                           </div>
                         ))}
@@ -205,10 +215,10 @@ export default function Page() {
                     return (
                       <div key={dayIdx} className="flex border-b border-slate-100 dark:border-slate-800">
                         {/* day label */}
-                        <div className="w-[100px] shrink-0 border-r border-slate-200 px-2 py-2 dark:border-slate-700">
-                          <div className="text-xs font-bold text-slate-900 dark:text-white">第 {dayIdx + 1} 天</div>
-                          <div className="text-[10px] text-slate-400">{dateForDay(dayIdx)}</div>
-                          <div className="mt-0.5 text-[10px] text-[#FF7A45]">{stops.length} 站</div>
+                        <div className="w-[110px] shrink-0 border-r border-slate-200 px-2 py-2 dark:border-slate-700">
+                          <div className="text-sm font-bold text-slate-900 dark:text-white">第 {dayIdx + 1} 天</div>
+                          <div className="text-xs text-slate-400">{dateForDay(dayIdx)}</div>
+                          <div className="mt-0.5 text-xs text-[#FF7A45]">{stops.length} 站</div>
                         </div>
 
                         {/* timeline track */}
@@ -305,11 +315,11 @@ export default function Page() {
                                 }}
                               >
                                 <div
-                                  className="flex h-[44px] items-center gap-1 rounded-lg px-1.5 text-white shadow-sm transition hover:brightness-110 hover:shadow-lg"
+                                  className="flex h-[48px] items-center gap-1 rounded-lg px-2 text-white shadow-sm transition hover:brightness-110 hover:shadow-lg"
                                   style={{ background: st.color, width: "100%" }}
                                 >
-                                  <span className="shrink-0 text-xs">{stop.emoji}</span>
-                                  <span className="truncate text-[10px] font-bold">{stop.name}</span>
+                                  <span className="shrink-0 text-sm">{stop.emoji}</span>
+                                  <span className="truncate text-xs font-bold">{stop.name}</span>
                                 </div>
                               </div>
                             );
@@ -326,8 +336,9 @@ export default function Page() {
                     );
                   })}
 
-                  {/* floating hover card (rendered once, outside overflow) */}
-                  {hovered && (
+                  {/* floating hover card — portaled to <body> so backdrop-blur on
+                      this container can't trap the fixed-position card. */}
+                  {hovered && createPortal(
                     <div
                       className="fixed z-[2000] min-w-[240px] rounded-xl border border-slate-200 bg-white p-3 shadow-xl transition-opacity duration-150 dark:border-slate-700 dark:bg-slate-900"
                       style={{
@@ -375,7 +386,8 @@ export default function Page() {
                           className="rounded-md bg-red-50 px-2 py-1 text-[10px] font-semibold text-red-600 dark:bg-red-950/30">✕</button>
                       </div>
                       <div className="mt-1.5 text-[9px] text-slate-300">💡 拖拽色块可调整顺序 · ± 修改时长</div>
-                    </div>
+                    </div>,
+                    document.body
                   )}
 
                   {/* add-stop picker */}

@@ -69,10 +69,10 @@ export default function SiteHeader() {
                     "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition " +
                     (transparent
                       ? active
-                        ? "bg-[#FF7A45] text-white shadow-sm"
+                        ? "bg-[#00a7fa] text-white shadow-sm"
                         : "text-white/85 hover:bg-white/15"
                       : active
-                      ? "bg-[#FF7A45] text-white shadow-sm"
+                      ? "bg-[#00a7fa] text-white shadow-sm"
                       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800")
                   }
                 >

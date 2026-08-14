@@ -3,7 +3,7 @@
 > 项目位置：`D:\大学\旅游攻略网站\`
 > GitHub：`https://github.com/Robertwu523/phuquoc-travel`
 > 线上：`https://phuquoc-travel.netlify.app`
-> 最后更新：2026-08-13（手机端适配 + 地图/目录取消加入 + Supabase 账号云同步）
+> 最后更新：2026-08-13（手机端适配 + 地图/目录取消加入 + Supabase 账号云同步 + UI 精致化）
 
 ---
 
@@ -336,6 +336,24 @@
 **构建修复（`fd16072`）**：首次推送后 Netlify 构建失败——`AuthProvider.syncNow` 误用了 `pullAll`（`lib/sync.ts` 实际导出的是 `pushAll`），`next build` 严格类型检查报错（本地 `dev` 不查类型故漏网）。已改正并在推送前跑 `npm run build` 全量验证通过。**教训**：重大改动后应本地 `npm run build` 而非只靠 `dev`，因 `dev` 不做完整类型检查。
 
 **构建修复 2（Netlify 预渲染崩溃）**：第二次推送后 Netlify 在"静态预渲染 /zh/auth、/zh/me"阶段失败——`lib/supabase/client.ts` 在模块加载时立即 `createBrowserClient`，而 Netlify 构建服务器没有 Supabase 环境变量，初始化即抛错。改为 **Proxy 懒加载**：模块加载时不创建客户端，首次真实访问（client 侧、有变量时）才创建；环境变量缺失只在运行时按需抛错，预渲染不再崩。本地用空环境变量 `npm run build` 验证通过。**另**：线上要真正连 Supabase，还需在 Netlify `Site configuration → Environment variables` 配 `NEXT_PUBLIC_SUPABASE_URL` 和 `NEXT_PUBLIC_SUPABASE_ANON_KEY`（与 `.env.local` 同值）。
+
+### 12.4 UI 精致化（借鉴 Landed 风格，浅色基调）
+> ⚠️ **本次改动尚未提交/推送**（等待用户确认推送）
+
+用户从 HTML5 UP 模板站选了 **Landed**（暗色、现代、强动态落地页）。因 Landed 是整页模板不能直接套用，定为**浅色基调 + 保留橙色 `#FF7A45` 主题**，只借鉴其设计语言：滚动淡入动效、hero 冲击力、卡片质感。
+
+**新增文件**：
+- `components/Reveal.tsx` — 可复用滚动淡入组件。`IntersectionObserver` 检测进入视区，`opacity-0 translate-y-4 → opacity-100 translate-y-0`（700ms ease-out），支持 `delay` 错峰、`as` 多态标签。**安全设计**：默认显示，仅 mount 后且 observer 确实挂上才隐藏；SSR/无 JS/observer 不可用/`prefers-reduced-motion` 时直接显示，绝不留内容看不见。
+
+**修改文件**：
+- `app/globals.css` — `html { scroll-behavior:smooth }`；`@theme` 加 `--radius-card`/`--shadow-card` 卡片质感变量；`.pq-scroll-cue` 滚动指示器动画关键帧；`prefers-reduced-motion` 下禁用上述动画 + 平滑滚动
+- `app/[locale]/page.tsx`（首页 hero）— 徽章/标题/副标题/按钮用 Reveal **错峰淡入**（0/120/240/360ms）；按钮升级为渐变（`from-[#FF7A45] to-[#FF9A6C]`）+ 橙色阴影 + 悬停上浮；加 **Landed 式滚动指示器**（底部小白球弹跳）；渐变遮罩改双向（顶暗给导航对比、底淡出到正文背景）
+- `components/PageHero.tsx`（各子页顶部 banner）— 文字 Reveal 淡入；eyebrow 改药丸标签；渐变更柔和（底部淡出到页面背景）
+- `components/InfoSection.tsx`（信息卡片）— 每张卡片用 `<Reveal delay={i*80}>` 依次浮现；卡片用 `--radius-card`/`--shadow-card` 统一质感
+
+**明确未动**：行程甘特图、地图（Leaflet 自有样式）、记账/证件/货币内容逻辑、暗色模式精修——只统一风格，不改功能。
+
+**验证**：本地 `npm run build` 全量通过（首次 Reveal 用 `keyof JSX.IntrinsicElements` 在 React 19 报 TS 错，改 `ElementType` 后过）；浏览器确认首页 hero 文字错峰、滚动指示器、`/info` 18 张卡片可见无遮挡、reduced-motion 安全路径成立。
 
 ---
 

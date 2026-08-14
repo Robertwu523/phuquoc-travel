@@ -4,6 +4,27 @@ import { categoryStyles, styleFor } from "@/lib/categories";
 export type StopCategory = PoiCategory | "custom";
 export type Locale = "zh" | "en";
 
+/** Kinds of entries that can appear in a day's timeline. */
+export type ItemType = "activity" | "transport" | "hotel" | "food" | "note";
+
+/** A single entry in a day's plan. activity items may reference a curated POI / custom pin. */
+export type TripItem = {
+  id: string;
+  type: ItemType;
+  title: string;
+  /** HH:MM start time, optional */
+  time?: string;
+  /** duration in hours, optional */
+  duration?: number;
+  note?: string;
+  cost?: { amount: number; currency: "VND" | "HKD" | "USD" | "CNY" };
+  /** present when this item is tied to a curated POI or custom pin (keeps map in sync) */
+  poiId?: string;
+  lat?: number;
+  lng?: number;
+  emoji?: string;
+};
+
 /** A user-added place, stored in the trip store and shown in the catalog. */
 export type CustomPin = {
   id: string;

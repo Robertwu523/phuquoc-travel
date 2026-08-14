@@ -1,33 +1,57 @@
-import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import { getTranslations, getLocale } from "next-intl/server";
+import { pois } from "@/data/pois";
+import TourCard from "@/components/TourCard";
+import Marquee from "@/components/Marquee";
+import SectionText from "@/components/SectionText";
+import FSButton from "@/components/FSButton";
+import type { Locale } from "@/lib/stops";
 
 export default async function Page() {
   const t = await getTranslations("Hero");
+  const locale = (await getLocale()) as Locale;
 
   return (
-    <section className="relative -mt-16 flex min-h-screen flex-col items-center justify-center overflow-hidden">
-      <div
-        className="absolute inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: "url(/images/phuquoc-sunset.jpg)" }}
-      />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/30 to-black/70" />
+    <>
+      {/* ===== Hero: full-bleed sunset photo + dark overlay + centered text ===== */}
+      <section className="-mt-16 relative flex min-h-screen w-full items-center justify-center overflow-hidden">
+        <div
+          className="absolute inset-0 -z-10 bg-cover bg-center"
+          style={{ backgroundImage: "url(/images/phuquoc-palm-frame.jpg)" }}
+        />
+        {/* dark overlay so white text reads clearly */}
+        <div className="absolute inset-0 -z-10 bg-black/55" />
 
-      <span className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.18em] text-white backdrop-blur-md">
-        🇻🇳 Phú Quốc · 从香港出发
-      </span>
-      <h1 className="mt-5 px-4 text-center text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl md:text-7xl">
-        {t("title")}
-      </h1>
-      <p className="mt-5 max-w-xl px-4 text-center text-sm text-white/85 sm:text-base">
-        {t("subtitle")}
-      </p>
-      <Link
-        href="/trip"
-        className="group mt-9 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3 text-base font-bold text-slate-900 shadow-lg transition hover:bg-slate-100"
-      >
-        进入行程
-        <span className="transition-transform group-hover:translate-x-0.5">→</span>
-      </Link>
-    </section>
+        <div className="flex flex-col items-center px-6 text-center">
+          <h1 className="font-headline text-5xl font-black uppercase leading-[0.95] tracking-tight text-white drop-shadow-lg sm:text-6xl md:text-7xl">
+            {t("title")}
+          </h1>
+          <p className="mt-3 text-sm font-medium uppercase tracking-[0.25em] text-white/80 sm:text-base">
+            Phú Quốc · 富国岛
+          </p>
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-white/90 sm:text-lg">
+            {t("subtitle")}
+          </p>
+          <div className="mt-10">
+            <FSButton href="/trip">{t("startPlanning")}</FSButton>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== Marquee ===== */}
+      <Marquee items={pois.map((p) => p.name[locale])} />
+
+      {/* ===== Expedition gallery ===== */}
+      <section id="expeditions" className="mx-auto max-w-7xl px-6 py-20">
+        <SectionText index="[01]" eyebrow="EXPEDITIONS" title="精选景点" />
+        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {pois.slice(0, 9).map((poi) => (
+            <TourCard key={poi.id} poi={poi} locale={locale} />
+          ))}
+        </div>
+        <div className="mt-12 text-center">
+          <FSButton variant="outline" href="/map">在地图上探索 →</FSButton>
+        </div>
+      </section>
+    </>
   );
 }

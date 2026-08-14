@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import Reveal from "@/components/Reveal";
 
 type Block = {
   titleKey:
@@ -36,7 +37,7 @@ export default async function InfoSection() {
     <section id="info" className="scroll-mt-20 py-12">
       <div className="mx-auto max-w-6xl px-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {blocks.map((b) => {
+          {blocks.map((b, i) => {
             const inner = (
               <>
                 <h3 className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
@@ -54,11 +55,11 @@ export default async function InfoSection() {
               </>
             );
             const cls =
-              "group block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition " +
+              "group block h-full rounded-[var(--radius-card)] border border-slate-200 bg-white p-5 shadow-[var(--shadow-card)] transition " +
               (b.href
-                ? "hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                ? "hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
                 : "dark:border-slate-800 dark:bg-slate-900");
-            return b.href ? (
+            const card = b.href ? (
               <Link key={b.titleKey} href={b.href} className={cls}>
                 {inner}
               </Link>
@@ -66,6 +67,11 @@ export default async function InfoSection() {
               <div key={b.titleKey} className={cls}>
                 {inner}
               </div>
+            );
+            return (
+              <Reveal key={b.titleKey} delay={i * 80} className="h-full">
+                {card}
+              </Reveal>
             );
           })}
         </div>

@@ -64,14 +64,22 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
+    <div className="relative">
+      {/* palm-framed Phu Quoc photo — only on this page, fixed behind content */}
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url(/images/phuquoc-me-bg.jpg)" }}
+      />
+      <div className="fixed inset-0 -z-10 bg-white/50" />
+
+      <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       {/* header */}
-      <div className="rounded-2xl bg-gradient-to-br from-[#FFB088] to-[#FF7A45] p-6 text-center text-white">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-3xl backdrop-blur">
+      <div className="rounded-2xl border border-white/50 bg-white/75 p-6 text-center shadow-sm backdrop-blur-md">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FF7A45]/15 text-3xl">
           🏝️
         </div>
-        <h1 className="mt-3 text-xl font-extrabold">富国岛旅行助手</h1>
-        <p className="text-sm text-white/80">
+        <h1 className="mt-3 text-xl font-extrabold text-slate-900 dark:text-white">富国岛旅行助手</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           出发日期：{startDate || "待定"} · {days} 天行程
         </p>
       </div>
@@ -83,7 +91,7 @@ export default function ProfilePage() {
           {stats.map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl border border-slate-200 bg-white p-4 text-center dark:border-slate-800 dark:bg-slate-900"
+              className="rounded-2xl border border-white/50 bg-white/75 p-4 text-center shadow-sm backdrop-blur-md"
             >
               <div className="text-2xl">{s.emoji}</div>
               <div className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{s.value}</div>
@@ -94,7 +102,7 @@ export default function ProfilePage() {
       </div>
 
       {/* account + sync */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-2xl border border-white/50 bg-white/75 p-5 shadow-sm backdrop-blur-md">
         {user ? (
           <>
             <div className="flex items-center justify-between gap-3">
@@ -170,7 +178,7 @@ export default function ProfilePage() {
             type="button"
             onClick={exportData}
             disabled={!hydrated}
-            className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-[#FF7A45] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            className="flex w-full items-center justify-between rounded-xl border border-white/50 bg-white/75 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm backdrop-blur-md transition hover:border-[#FF7A45]"
           >
             <span>📥 导出全部数据（JSON）</span>
             <span className="text-slate-400">→</span>
@@ -212,9 +220,10 @@ export default function ProfilePage() {
       </div>
 
       {/* about */}
-      <div className="rounded-xl bg-slate-100 p-4 text-center text-xs text-slate-400 dark:bg-slate-800/60">
+      <div className="rounded-xl border border-white/40 bg-white/70 p-4 text-center text-xs text-slate-500 shadow-sm backdrop-blur-md">
         富国岛旅行助手 ·{" "}
         {user ? "数据已同步至云端（仅你自己可见）· 登出后本机仍可离线使用" : "数据存于本机浏览器 · 登录后可跨设备同步"}
+      </div>
       </div>
     </div>
   );
