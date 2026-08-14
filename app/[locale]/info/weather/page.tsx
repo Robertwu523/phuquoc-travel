@@ -428,16 +428,16 @@ function SunCycleCard({ data }: { data: Data }) {
           <div className="font-bold text-slate-900 dark:text-white">{hh(set)}</div>
         </div>
       </div>
-      <div className="mt-4 flex items-center gap-3 rounded-2xl bg-slate-100 p-4 dark:border dark:border-slate-700 dark:bg-slate-800/60">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF7A45]/15 text-xl">☀️</div>
+      <div className="mt-4 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#FF7A45]/15 text-xl">☀️</div>
         <div className="flex-1">
-          <div className="text-lg font-bold text-slate-900 dark:text-white">
+          <div className="text-lg font-bold text-slate-900">
             UV {uv.toFixed(0)}{" "}
             <span className="ml-1 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: uvl.color, color: "#1a1a1a" }}>
               {uvl.label}
             </span>
           </div>
-          <div className="text-[11px] text-white/70">紫外线指数 · 近赤道，注意防晒</div>
+          <div className="text-[11px] text-slate-500">紫外线指数 · 近赤道，注意防晒</div>
         </div>
       </div>
     </div>

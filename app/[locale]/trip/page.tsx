@@ -50,6 +50,17 @@ function minToX(min: number) {
   return ((min - START_HOUR * 60) / 60) * PX_PER_HOUR;
 }
 
+/** Given a clientY and total day count, figure out which day-row index the pointer
+ *  is over. Day rows are the `.pq-day-row` elements. Returns null if outside any. */
+function dayFromPoint(clientY: number, dayCount: number): number | null {
+  const rows = document.querySelectorAll<HTMLElement>(".pq-day-row");
+  for (let d = 0; d < rows.length && d < dayCount; d += 1) {
+    const r = rows[d].getBoundingClientRect();
+    if (clientY >= r.top && clientY <= r.bottom) return d;
+  }
+  return null;
+}
+
 /** all pickable stops (curated + custom), filtered by query */
 function pickableStops(customPins: Record<string, any>, locale: Locale, q: string) {
   const curated = pois.map((p) => ({ id: p.id, name: p.name[locale], emoji: categoryStyles[p.category]?.emoji ?? "", isCurated: true, lat: p.lat, lng: p.lng }));
@@ -84,7 +95,9 @@ export default function Page() {
   const [addQuery, setAddQuery] = useState("");
   const [dragInfo, setDragInfo] = useState<{
     day: number; fromIdx: number; stopId: string;
-    startX: number; moved: boolean; origLeft: number;
+    startX: number; startY: number; moved: boolean;
+    origLeft: number; origWidth: number;
+    mode: "move" | "resize";
     trackEl: HTMLElement | null;
   } | null>(null);
   const [editDur, setEditDur] = useState<{ day: number; idx: number; stopId: string; value: number } | null>(null);
@@ -213,7 +226,7 @@ export default function Page() {
                       : 0;
 
                     return (
-                      <div key={dayIdx} className="flex border-b border-slate-100 dark:border-slate-800">
+                      <div key={dayIdx} className="pq-day-row flex border-b border-slate-100 dark:border-slate-800">
                         {/* day label */}
                         <div className="w-[110px] shrink-0 border-r border-slate-200 px-2 py-2 dark:border-slate-700">
                           <div className="text-sm font-bold text-slate-900 dark:text-white">第 {dayIdx + 1} 天</div>
@@ -256,30 +269,61 @@ export default function Page() {
                                   if (e.button !== 0) return;
                                   e.currentTarget.setPointerCapture(e.pointerId);
                                   const trackEl = e.currentTarget.parentElement!;
+                                  const blockRect = e.currentTarget.getBoundingClientRect();
+                                  // right ~10px = resize handle, else move
+                                  const edge = e.clientX >= blockRect.right - 12;
                                   setDragInfo({
                                     day: dayIdx, fromIdx: i, stopId: stop.id,
-                                    startX: e.clientX, moved: false,
-                                    origLeft: left, trackEl,
+                                    startX: e.clientX, startY: e.clientY, moved: false,
+                                    origLeft: left, origWidth: width,
+                                    mode: edge ? "resize" : "move",
+                                    trackEl,
                                   });
                                 }}
                                 onPointerMove={(e) => {
                                   if (!dragInfo || dragInfo.day !== dayIdx || dragInfo.fromIdx !== i) return;
                                   const dx = e.clientX - dragInfo.startX;
-                                  if (!dragInfo.moved && Math.abs(dx) < 5) return;
-                                  setDragInfo({ ...dragInfo, moved: true });
-                                  // snap to 15-min
-                                  const newLeft = Math.max(0, Math.min(TIMELINE_WIDTH - width, dragInfo.origLeft + dx));
-                                  e.currentTarget.style.left = `${newLeft}px`;
+                                  const dy = e.clientY - dragInfo.startY;
+                                  if (!dragInfo.moved && Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+                                  if (!dragInfo.moved) setDragInfo({ ...dragInfo, moved: true });
+
+                                  if (dragInfo.mode === "resize") {
+                                    // resize: change width (duration), keep left (start)
+                                    const newW = Math.max(40, dragInfo.origWidth + dx);
+                                    e.currentTarget.style.width = `${newW}px`;
+                                  } else {
+                                    // move: horizontal = change start time (15-min snap)
+                                    const newLeft = Math.max(0, Math.min(TIMELINE_WIDTH - width, dragInfo.origLeft + dx));
+                                    e.currentTarget.style.left = `${newLeft}px`;
+                                  }
                                 }}
                                 onPointerUp={(e) => {
                                   if (!dragInfo || dragInfo.day !== dayIdx || dragInfo.fromIdx !== i) return;
                                   e.currentTarget.releasePointerCapture(e.pointerId);
                                   if (dragInfo.moved) {
                                     justDragged.current = true;
-                                    const curLeft = parseFloat(e.currentTarget.style.left) || dragInfo.origLeft;
-                                    const timeMin = Math.round((curLeft / PX_PER_HOUR + START_HOUR) * 60 / 15) * 15;
-                                    setStopStartTime(dayIdx, i, timeMin);
-                                    e.currentTarget.style.left = `${minToX(timeMin)}px`;
+                                    if (dragInfo.mode === "resize") {
+                                      // commit new duration from width
+                                      const curW = parseFloat(e.currentTarget.style.width) || dragInfo.origWidth;
+                                      const hours = Math.round((curW / PX_PER_HOUR) * 4) / 4; // 15-min granularity
+                                      setStopDuration(dayIdx, i, Math.max(0.25, hours));
+                                      e.currentTarget.style.width = `${Math.max(40, hours * PX_PER_HOUR)}px`;
+                                    } else {
+                                      // cross-day check: which day row is the pointer over?
+                                      const targetDay = dayFromPoint(e.clientY, dayArr.length);
+                                      const curLeft = parseFloat(e.currentTarget.style.left) || dragInfo.origLeft;
+                                      const timeMin = Math.round((curLeft / PX_PER_HOUR + START_HOUR) * 60 / 15) * 15;
+                                      if (targetDay !== null && targetDay !== dayIdx) {
+                                        // move to another day
+                                        removePoiFromDay(dayIdx, stop.id);
+                                        addPoiToDay(targetDay, stop.id);
+                                        const newIdx = (useTripStore.getState().dayAssignments[targetDay]?.length ?? 1) - 1;
+                                        setStopStartTime(targetDay, newIdx, timeMin);
+                                      } else {
+                                        setStopStartTime(dayIdx, i, timeMin);
+                                        e.currentTarget.style.left = `${minToX(timeMin)}px`;
+                                      }
+                                    }
                                   }
                                   setDragInfo(null);
                                 }}
