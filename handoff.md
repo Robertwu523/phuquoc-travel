@@ -3,7 +3,7 @@
 > 项目位置：`D:\大学\旅游攻略网站\`
 > GitHub：`https://github.com/Robertwu523/phuquoc-travel`
 > 线上：`https://phuquoc-travel.netlify.app`
-> 最后更新：2026-08-13（手机端适配 + 地图/目录取消加入 + Supabase 账号云同步 + UI 精致化）
+> 最后更新：2026-08-14（富国岛美图背景 + 磨砂玻璃 + 行程 UX 修复）
 
 ---
 
@@ -355,6 +355,27 @@
 
 **验证**：本地 `npm run build` 全量通过（首次 Reveal 用 `keyof JSX.IntrinsicElements` 在 React 19 报 TS 错，改 `ElementType` 后过）；浏览器确认首页 hero 文字错峰、滚动指示器、`/info` 18 张卡片可见无遮挡、reduced-motion 安全路径成立。
 
+### 12.5 富国岛美图背景 + 磨砂玻璃（行程页 / 我的页）
+> 提交：`5214ac3`、`af78386`（已推送）
+
+用户要"风景大图优先、照片说话"。多轮试错后定型：
+
+- **首页 hero**：全屏 `phuquoc-palm-frame.jpg`（椰子树框景）+ 半透明黑遮罩 + 白色居中标题 + 白色按钮（简洁清晰）。底部加回"向下探索"滚动指示器（`pq-scroll-cue` 动画，点击平滑滚到画廊）。**注意**：画廊在 hero 下方，需滚动可见（hero 是 `min-h-screen`）
+- **行程页 `/trip`**：`fixed inset-0 -z-10` 天堂海滩背景（`phuquoc-paradise.jpg`）+ `white/45` 白纱；摘要栏/tab/时间线表格加 `backdrop-blur-md` + `bg-white/75` 磨砂玻璃
+- **我的页 `/me`**：椰子树→换成 `phuquoc-me-bg.jpg`（干净海景）背景 + 全部卡片磨砂玻璃
+- **关键 bug 修复**：磨砂玻璃的 `backdrop-filter` 会创建**层叠上下文**，让内部 `position:fixed` 的悬浮卡片被困（定位错乱、显示在底部）。**解法**：用 React `createPortal` 把所有浮窗渲染到 `document.body`，彻底脱离容器。globals.css 的 `.pq-scroll-cue` 关键帧曾在回退深色时丢失，重新加回
+- **新增组件**：`FSButton`/`Marquee`/`TourCard`/`SectionText`（借鉴 Feral Sky 模板，后因深色不满意回退浅色，组件保留）
+- **首页画廊**：14 个景点全显示（之前 `slice(0,9)`），每个用 `data/pois.ts` 的 `image` 字段（`public/images/pois/*.jpg`，真实 Wikimedia 景点照）。**教训**：曾误删 `pois/` 目录（grep 静态字符串查不到动态 `poi.image` 引用），导致图片 404，后用 Wikimedia API 查真实 URL 全部恢复
+- **浅色基调**：曾试深色 Multiverse/Feral Sky 风格，用户不满意（"丑""看不清"），回退全站浅色
+
+### 12.6 行程页 UX 修复（拖动联动 / 时间点添加 / 数据同步）
+> 提交：`2fd662c`（已推送）
+
+- **拖动联动 bug**：原 `computeSchedule` 把无显式时间的景点"级联"排布（接着上一个结束+30min），导致拖一个景点后面全跟着动。**修复**：改成每个景点独立放置（显式时间或默认 09:00），拖一个只动那一个
+- **添加景点不落到点击时间**：点空白添加时只 `addPoiToDay`（默认 09:00），没用 `addSlot.timeMin`。**修复**：添加后用 `setStopStartTime(day, idx, addSlot.timeMin)` 设到用户点的时间
+- **dayItems 与 dayAssignments 不同步**：`addPoiToDay`/`removePoiFromDay` 只更新 `dayAssignments`（旧景点列表），没更新 `dayItems`（丰富模型），两者长度不一致导致索引算错。**修复**：两个 action 现在同时维护 `dayItems` 和 `dayAssignments`
+- **add-stop picker 被表格遮挡**：选择器用 `createPortal` 渲染到 body，脱离时间线的 `overflow-x-auto`/`backdrop-blur`，完整居中显示
+
 ---
 
 ## 十三、当前文件结构
@@ -399,9 +420,15 @@ D:\大学\旅游攻略网站\
 │   ├── WeatherMap.tsx              ← 天气页地图选点
 │   ├── AuthProvider.tsx            ← 账号上下文 + useAuth + 同步编排
 │   ├── UserMenu.tsx                ← 头部头像下拉（登录/退出）
+│   ├── ThemeProvider.tsx           ← 深/浅主题切换 + FOUC 防闪（当前默认浅色）
+│   ├── Reveal.tsx                  ← 滚动淡入动效（IntersectionObserver）
+│   ├── FSButton.tsx                ← 通用按钮（借 Feral Sky）
+│   ├── Marquee.tsx                 ← 跑马灯（景点名循环）
+│   ├── TourCard.tsx                ← 景点卡片（悬停高亮条，首页画廊用）
+│   ├── SectionText.tsx             ← 区块标题（编号 + eyebrow + 标题）
 │   └── CustomEventForm             ← 行程页内联的自定义事件表单
 ├── data/
-│   ├── pois.ts                     ← 14 个收录景点（坐标已校正）
+│   ├── pois.ts                     ← 14 个收录景点（坐标已校正 + image 字段）
 │   └── documents.ts                ← 证件/清单/费用/教程数据
 ├── lib/
 │   ├── store.ts                    ← Zustand store（v2 persist）
@@ -427,7 +454,10 @@ D:\大学\旅游攻略网站\
 ├── next.config.ts
 ├── tsconfig.json
 ├── package.json
-└── public/images/                  ← 6 张富国岛照片
+├── handoff.md                       ← 本开发日志
+└── public/images/                   ← 富国岛照片
+    ├── phuquoc-*.jpg                ← hero/背景用（sunset/sea/cablecar/boats/town/vinwonders/palm-frame/paradise/me-bg）
+    └── pois/                        ← 14 个景点各自的真实照片（Wikimedia/Unsplash，供 TourCard）
 ```
 
 ---
