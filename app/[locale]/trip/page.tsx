@@ -150,7 +150,17 @@ export default function Page() {
       ) : (
         <div className="mx-auto max-w-7xl px-3 py-4">
           {/* summary bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/50 bg-white/75 px-5 py-3 shadow-sm backdrop-blur-md">
+          <div
+            className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+            style={{
+              borderRadius: 16,
+              backdropFilter: "blur(18px) saturate(1.7)",
+              WebkitBackdropFilter: "blur(18px) saturate(1.7)",
+              background: "rgba(255,255,255,0.72)",
+              border: "1px solid rgba(255,255,255,0.5)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6)",
+            }}
+          >
             <div className="flex items-baseline gap-3">
               <h1 className="text-xl font-extrabold text-slate-900 dark:text-white">📋 富国岛行程</h1>
               <span className="text-base text-slate-500 dark:text-slate-400">{rangeStr} · {days}天 · <span className="font-semibold text-[#FF7A45]">{total}</span>个景点</span>
@@ -174,7 +184,17 @@ export default function Page() {
           </div>
 
           {/* tabs */}
-          <div className="mt-3 flex gap-1 rounded-xl border border-white/50 bg-white/75 p-1 shadow-sm backdrop-blur-md">
+          <div
+            className="mt-3 flex gap-1 p-1"
+            style={{
+              borderRadius: 16,
+              backdropFilter: "blur(18px) saturate(1.7)",
+              WebkitBackdropFilter: "blur(18px) saturate(1.7)",
+              background: "rgba(255,255,255,0.72)",
+              border: "1px solid rgba(255,255,255,0.5)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6)",
+            }}
+          >
             {TABS.map((tb) => (
               <button key={tb.key} type="button" onClick={() => setTab(tb.key)}
                 className={"flex-1 rounded-lg py-2.5 text-base font-semibold transition " +
@@ -197,7 +217,17 @@ export default function Page() {
                   </div>
                 </div>
               ) : (
-                <div className="overflow-x-auto rounded-2xl border border-white/50 bg-white/75 shadow-sm backdrop-blur-md">
+                <div
+                  className="overflow-x-auto"
+                  style={{
+                    borderRadius: 16,
+                    backdropFilter: "blur(18px) saturate(1.7)",
+                    WebkitBackdropFilter: "blur(18px) saturate(1.7)",
+                    background: "rgba(255,255,255,0.75)",
+                    border: "1px solid rgba(255,255,255,0.5)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.6)",
+                  }}
+                >
                   {/* hour header */}
                   <div className="flex border-b border-slate-200/70 bg-white/40">
                     <div className="w-[110px] shrink-0 border-r border-slate-200 px-2 py-1.5 text-xs font-bold uppercase text-slate-400 dark:border-slate-700">

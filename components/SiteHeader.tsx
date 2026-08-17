@@ -57,8 +57,17 @@ export default function SiteHeader() {
         </Link>
 
         <div className="flex flex-1 items-center justify-center gap-2">
-          {/* all nav items unified style */}
-          <div className="hidden items-center gap-1 rounded-full border border-slate-200 bg-white/70 p-1 backdrop-blur md:flex dark:border-slate-700 dark:bg-slate-900/70">
+          {/* all nav items unified style — liquid glass pill */}
+          <div
+            className="hidden items-center gap-1 rounded-full p-1 md:flex"
+            style={{
+              backdropFilter: "blur(18px) saturate(1.7)",
+              WebkitBackdropFilter: "blur(18px) saturate(1.7)",
+              background: "rgba(255,255,255,0.16)",
+              border: "1px solid rgba(255,255,255,0.35)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.45)",
+            }}
+          >
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href);
               return (
@@ -90,12 +99,18 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      {/* mobile: all items scrollable */}
+      {/* mobile: all items scrollable — liquid glass strip */}
       <div
         className={
-          "flex items-center gap-2 overflow-x-auto px-4 pb-1.5 md:hidden " +
-          (transparent ? "text-white/85" : "text-slate-600 dark:text-slate-300")
+          "mx-3 mb-1.5 flex items-center gap-2 overflow-x-auto rounded-full px-4 py-1.5 md:hidden " +
+          (isActive("/") ? "text-white/85" : "text-slate-700")
         }
+        style={{
+          backdropFilter: "blur(18px) saturate(1.7)",
+          WebkitBackdropFilter: "blur(18px) saturate(1.7)",
+          background: "rgba(255,255,255,0.2)",
+          border: "1px solid rgba(255,255,255,0.35)",
+        }}
       >
         {NAV_ITEMS.map((item) => (
           <Link

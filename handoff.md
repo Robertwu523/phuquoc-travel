@@ -3,7 +3,7 @@
 > 项目位置：`D:\大学\旅游攻略网站\`
 > GitHub：`https://github.com/Robertwu523/phuquoc-travel`
 > 线上：`https://phuquoc-travel.netlify.app`
-> 最后更新：2026-08-14（甘特图拖拽调时长 + 跨天拖拽 + UV 卡片修复）
+> 最后更新：2026-08-17（液态玻璃 UI：首页按钮 + 导航胶囊 + 各子页卡片）
 
 ---
 
@@ -384,6 +384,40 @@ handoff 待办里两项甘特图增强：
 - **跨天拖拽**：拖色块时用 `dayFromPoint(clientY)` 检测落在哪个 day-row（`.pq-day-row` 元素），松手时若不同天 → `removePoiFromDay(原天)`+`addPoiToDay(新天)`+设开始时间
 - **UV 卡片白底白字**：天气页 UV 卡片之前是 `bg-slate-100 text-white/70`（浅底白字看不见），改成 `border bg-white text-slate-900`，建议文字 `text-white/70`→`text-slate-500`
 - **跨天拖拽已验证**（合成事件测试：sao-beach 从 day0 移到 day1 成功）；resize 因 pointer-capture 在测试环境受限，代码审过正确，需手动验证
+
+### 12.8 液态玻璃 UI（Apple WWDC 2025 风格）
+> 借鉴 `github.com/viraj-perera-dev/liquid-glass`，把三处 UI 换成液态玻璃：首页「开始规划」按钮、顶栏 5 项导航胶囊、五个子页面卡片。**未提交/未推送**。
+
+**新增**：
+- `components/LiquidCard.tsx` — 通用液态玻璃卡片组件。`backdrop-blur + saturate`、鼠标跟随径向高光、顶部内高光、白色描边 + 内阴影；`solid` 参数把白底提到 0.78（文字为主的卡片可读性优先），`blur/radius/glow` 可调
+- `app/globals.css` — 共享 `.liquid`（0.72 白底）与 `.liquid-light`（0.16 白底，照片上用的浅玻璃）两个类
+- `app/[locale]/glass-demo/page.tsx` — `/glass-demo` 演示页（四种玻璃卡片 + 照片背景），仅作效果预览，**不需要可删目录**
+
+**应用位置**：
+- **首页按钮**：`FSButton` 加 `glass` 变体（胶囊 + 玻璃 + 鼠标跟随光泽），`开始规划` 用它
+- **导航栏**：桌面胶囊容器 + 移动端横条都改液态玻璃（内联样式，`rgba(255,255,255,0.16~0.2)` + blur + saturate + 内高光）
+- **行程页**：摘要栏 / tab / 甘特时间线面板升级为液态玻璃（0.72~0.75 白底）
+- **我的页**：4 处卡片（header / 统计 / 账号 / 导出按钮）换 `.liquid`
+- **地图页**：PoiSidebar 条目卡片换 `.liquid`
+- **机票页**：搜索主卡片 + 手动航班表单卡片换 `.liquid`
+- **信息页**：InfoSection 卡片改用 `<LiquidCard solid>`
+
+**关键 bug 修复（构建时发现）**：Turbopack 的 CSS 处理（Lightning CSS）会把 `.liquid` 里作者写的 `backdrop-filter` 删掉、只留 `-webkit-backdrop-filter`，而新版 Chrome 不认 `-webkit-` 单独生效 → `.liquid` 表面完全没有毛玻璃。**解法**：把 `-webkit-backdrop-filter` 写在 `backdrop-filter` **之前**（和 Tailwind 自身 utilities 的写法一致），编译产物两种都保留。已在 globals.css 加注释说明，dev 与 `next build` 产物均验证通过。
+
+**验证**：`npm run build` 通过；浏览器逐页检查计算样式——首页玻璃按钮（blur16+saturate1.8 白字）、导航胶囊（桌面/移动）、行程摘要/tab/时间线、我的页 8 卡、地图目录 14 卡、机票主卡、信息页 8 卡全部 `blur(18px) saturate(1.7)` 生效，控制台无报错。注：本环境截图工具不可用，改用 DOM 计算样式核对。
+
+**说明**：主仓库 `D:\大学\旅游攻略网站` 也有一份**未提交**的相同液态玻璃改动（本会话在 worktree 里复刻并继续验证）；`app/globals.css` 的声明顺序修复已同步到主仓库，避免合并时 bug 复发。
+
+### 12.9 滚动条去蓝 + 轨道去灰
+> 用户反馈地图页景点目录左侧滚动条「底色跟总体不一样 + 蓝色滚动条，不想要」。原因：`globals.css` 全局自定义滚动条把轨道设成浅灰 `#f3f4f6`（在白底页面上是一条突兀的灰条），滑条用主题蓝 `#00a7fa`。**修复**：轨道改透明、滑条改中性灰（`#d1d5db`，hover `#9ca3af`，圆角），并加 `prefers-color-scheme: dark` 深色变体；宽度 12px→10px。全局生效（行程甘特图等所有滚动条同步去蓝）。已同步主仓库 `globals.css`。浏览器验证：轨道透明、滑条 `rgb(209,213,219)`，无蓝色。
+
+### 12.10 白底页卡片去灰（玻璃只留在照片页）
+> 用户仍反馈地图页左侧「还是灰色底」。真相：**半透明毛玻璃卡（72% 白 + backdrop-blur + saturate）叠在白底页面上，会在用户机器上合成出发灰的色块**——毛玻璃需要背后有照片/颜色才有意义。**决策**：玻璃效果只保留在有照片背景的页面（首页 hero 按钮、导航胶囊、行程页、我的页）；白底功能页（地图目录 / 机票 / 信息）的卡片全部改回**不透明白 + 可见描边**，保证干净无灰。
+- `components/PoiSidebar.tsx`：目录条目 `liquid` → `rounded-xl border border-slate-200 bg-white p-3 shadow-sm`（恢复原样）
+- `components/FlightPanel.tsx`：搜索主卡 + 手动航班表单卡 `liquid` → 不透明白 + slate 描边
+- `components/LiquidCard.tsx`：`solid` 变体 0.78 白 → `#ffffff` 不透明白，描边 `rgba(226,232,240,0.9)`（信息页卡片不再发灰；`solid` 目前只有信息页用）
+- 验证：地图 14 卡 / 机票主卡 / 信息 6 卡全部 `rgb(255,255,255)` 不透明 + 可见描边 + 无 backdrop-filter；构建通过
+- **教训**：给卡片加玻璃前先想页面背后是什么——白底页上玻璃只会变灰，不要硬套
 
 ---
 

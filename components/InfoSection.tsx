@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import Reveal from "@/components/Reveal";
+import LiquidCard from "@/components/LiquidCard";
 
 type Block = {
   titleKey:
@@ -54,19 +55,16 @@ export default async function InfoSection() {
                 )}
               </>
             );
-            const cls =
-              "group block h-full rounded-[var(--radius-card)] border border-slate-200 bg-white p-5 shadow-[var(--shadow-card)] transition " +
-              (b.href
-                ? "hover:-translate-y-0.5 hover:border-teal-400 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900"
-                : "dark:border-slate-800 dark:bg-slate-900");
             const card = b.href ? (
-              <Link key={b.titleKey} href={b.href} className={cls}>
-                {inner}
+              <Link key={b.titleKey} href={b.href} className="group block h-full">
+                <LiquidCard solid className="h-full p-5 transition hover:-translate-y-0.5">
+                  {inner}
+                </LiquidCard>
               </Link>
             ) : (
-              <div key={b.titleKey} className={cls}>
+              <LiquidCard key={b.titleKey} solid className="h-full p-5">
                 {inner}
-              </div>
+              </LiquidCard>
             );
             return (
               <Reveal key={b.titleKey} delay={i * 80} className="h-full">

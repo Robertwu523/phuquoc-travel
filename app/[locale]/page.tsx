@@ -32,7 +32,7 @@ export default async function Page() {
             {t("subtitle")}
           </p>
           <div className="mt-10">
-            <FSButton href="/trip">{t("startPlanning")}</FSButton>
+            <FSButton href="/trip" variant="glass">{t("startPlanning")}</FSButton>
           </div>
         </div>
 

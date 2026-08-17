@@ -30,9 +30,16 @@ body {
   border-color: #e5e7eb;
 }
 
-::-webkit-scrollbar { width: 12px; }
-::-webkit-scrollbar-track { background: #f3f4f6; }
-::-webkit-scrollbar-thumb { background: #00a7fa; }
+/* neutral slim scrollbars — no accent-blue thumb, transparent track so the
+   track never clashes with a page's background */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-thumb { background: #475569; }
+  ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+}
 
 /* ---- Font helpers ---- */
 .font-headline { font-family: var(--font-headline), sans-serif; }
@@ -160,3 +167,22 @@ body {
   100% { transform: translateY(0); opacity: 0.9; }
 }
 .pq-scroll-cue { animation: pq-cue 1.8s ease-in-out infinite; }
+
+/* ---- Liquid glass surface (Apple WWDC 2025 style) ---- */
+/* NOTE: -webkit- must come first — Turbopack's CSS pass drops the unprefixed
+   backdrop-filter when the prefixed one follows it (verified 12.8). */
+.liquid {
+  -webkit-backdrop-filter: blur(18px) saturate(1.7);
+  backdrop-filter: blur(18px) saturate(1.7);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+/* lighter variant for overlays on photos */
+.liquid-light {
+  -webkit-backdrop-filter: blur(18px) saturate(1.7);
+  backdrop-filter: blur(18px) saturate(1.7);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}

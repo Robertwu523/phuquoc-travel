@@ -74,7 +74,7 @@ export default function ProfilePage() {
 
       <div className="mx-auto max-w-3xl px-4 py-10 space-y-6">
       {/* header */}
-      <div className="rounded-2xl border border-white/50 bg-white/75 p-6 text-center shadow-sm backdrop-blur-md">
+      <div className="liquid rounded-2xl p-6 text-center">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FF7A45]/15 text-3xl">
           🏝️
         </div>
@@ -91,7 +91,7 @@ export default function ProfilePage() {
           {stats.map((s) => (
             <div
               key={s.label}
-              className="rounded-2xl border border-white/50 bg-white/75 p-4 text-center shadow-sm backdrop-blur-md"
+              className="liquid rounded-2xl p-4 text-center"
             >
               <div className="text-2xl">{s.emoji}</div>
               <div className="mt-1 text-xl font-extrabold text-slate-900 dark:text-white">{s.value}</div>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
       </div>
 
       {/* account + sync */}
-      <div className="rounded-2xl border border-white/50 bg-white/75 p-5 shadow-sm backdrop-blur-md">
+      <div className="liquid rounded-2xl p-5">
         {user ? (
           <>
             <div className="flex items-center justify-between gap-3">
@@ -178,7 +178,7 @@ export default function ProfilePage() {
             type="button"
             onClick={exportData}
             disabled={!hydrated}
-            className="flex w-full items-center justify-between rounded-xl border border-white/50 bg-white/75 px-4 py-3 text-sm font-medium text-slate-700 shadow-sm backdrop-blur-md transition hover:border-[#FF7A45]"
+            className="liquid flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-[#FF7A45]"
           >
             <span>📥 导出全部数据（JSON）</span>
             <span className="text-slate-400">→</span>
